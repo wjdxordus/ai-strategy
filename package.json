@@ -1,0 +1,16 @@
+{
+  "name": "daily-log-web",
+  "version": "1.0.0",
+  "description": "일상기록 웹 프론트엔드",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

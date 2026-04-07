@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>일상기록</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #F7F8FC; font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif; color: #1A1A2E; }
+    ::-webkit-scrollbar { display: none; }
+
+    #app { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .app-header {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+      padding: 48px 20px 28px;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(255,107,107,0.35);
+    }
+    .header-meta { font-size: 12px; opacity: 0.8; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .header-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .header-sub { margin-top: 4px; font-size: 13px; opacity: 0.85; }
+    .header-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.25); border-radius: 20px;
+      padding: 4px 12px; margin-top: 10px; font-size: 12px; font-weight: 600;
+    }
+
+    .content { flex: 1; padding: 16px; }
+
+    .state-center {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 80px 20px; text-align: center;
+    }
+    .state-icon { font-size: 64px; margin-bottom: 16px; }
+    .state-title { font-size: 18px; font-weight: 600; color: #555; margin-bottom: 8px; }
+    .state-desc { font-size: 14px; color: #999; line-height: 1.6; }
+    .spinner {
+      width: 44px; height: 44px; margin-bottom: 20px;
+      border: 4px solid #f0f0f0; border-top-color: #FF6B6B;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .group-card {
+      background: #fff;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      transition: box-shadow 0.2s;
+    }
+    .group-card:active { box-shadow: 0 1px 6px rgba(0,0,0,0.1); }
+
+    .group-header {
+      padding: 16px 16px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .group-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .group-info { flex: 1; min-width: 0; }
+    .group-name {
+      font-size: 14px; font-weight: 700; color: #1A1A2E;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .group-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .meta-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 11px; color: #888; background: #F5F5F5;
+      padding: 2px 8px; border-radius: 10px;
+    }
+    .meta-badge.time { color: #FF6B6B; background: #FFF0F0; }
+    .meta-badge.count { color: #5C7AFF; background: #EEF2FF; }
+    .group-chevron {
+      font-size: 18px; color: #CCC; transition: transform 0.3s; flex-shrink: 0; margin-top: 4px;
+    }
+    .group-chevron.open { transform: rotate(180deg); }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 0 2px 8px;
+    }
+    .photo-item {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      cursor: pointer;
+      background: #F0F0F0;
+    }
+    .photo-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s;
+    }
+    .photo-item:active img { transform: scale(0.97); }
+    .photo-time {
+      position: absolute; bottom: 4px; right: 4px;
+      background: rgba(0,0,0,0.55); color: #fff;
+      font-size: 9px; padding: 2px 5px; border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    .grid-enter-active { animation: slideDown 0.3s ease; }
+    .grid-leave-active { animation: slideDown 0.2s ease reverse; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.fade-enter-active,
+    .modal-overlay.fade-leave-active { transition: opacity 0.25s; }
+    .modal-overlay.fade-enter, .modal-overlay.fade-leave-to { opacity: 0; }
+
+    .modal-inner { position: relative; max-width: 100%; max-height: 80vh; }
+    .modal-img { max-width: 100%; max-height: 75vh; border-radius: 8px; display: block; }
+    .modal-close {
+      position: fixed; top: 16px; right: 16px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.2); border: none;
+      color: #fff; font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-info {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      padding: 40px 20px 20px;
+      color: #fff;
+    }
+    .modal-location { font-size: 13px; opacity: 0.8; margin-bottom: 4px; }
+    .modal-time { font-size: 14px; font-weight: 600; }
+
+    .summary-bar {
+      background: #fff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .summary-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .summary-val { font-size: 22px; font-weight: 700; color: #FF6B6B; }
+    .summary-lbl { font-size: 11px; color: #999; margin-top: 2px; }
+    .summary-divider { width: 1px; height: 30px; background: #F0F0F0; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- 로딩 -->
+  <div v-if="loading" class="state-center">
+    <div class="spinner"></div>
+    <div class="state-title">사진 불러오는 중...</div>
+    <div class="state-desc">오늘 찍은 사진을 장소별로 정리하고 있어요</div>
+  </div>
+
+  <!-- 메인 -->
+  <div v-else>
+
+    <header class="app-header">
+      <div class="header-meta">Daily Record</div>
+      <div class="header-title">오늘의 기록</div>
+      <div class="header-sub">{{ todayLabel }}</div>
+      <div v-if="photoGroups.length > 0" class="header-badge">
+        📍 {{ photoGroups.length }}곳 방문 · 📷 {{ totalPhotos }}장
+      </div>
+    </header>
+
+    <main class="content">
+
+      <div v-if="photoGroups.length === 0" class="state-center">
+        <div class="state-icon">📭</div>
+        <div class="state-title">오늘 기록된 사진이 없어요</div>
+        <div class="state-desc">위치 정보가 포함된 사진을 찍으면<br>자동으로 장소별로 정리됩니다.</div>
+      </div>
+
+      <div v-else>
+        <div class="summary-bar">
+          <div class="summary-item">
+            <span class="summary-val">{{ photoGroups.length }}</span>
+            <span class="summary-lbl">장소</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <span class="summary-val">{{ totalPhotos }}</span>
+            <span class="summary-lbl">사진</span>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <span class="summary-val">{{ dayRange }}</span>
+            <span class="summary-lbl">활동 시간</span>
+          </div>
+        </div>
+
+        <div v-for="(group, gi) in photoGroups" :key="group.groupId" class="group-card">
+          <div class="group-header" @click="toggleGroup(gi)">
+            <div class="group-icon">{{ groupEmoji(gi) }}</div>
+            <div class="group-info">
+              <div class="group-name">{{ group.locationLabel }}</div>
+              <div class="group-meta">
+                <span class="meta-badge time">⏰ {{ formatTimeRange(group.startTime, group.endTime) }}</span>
+                <span class="meta-badge count">📷 {{ group.photoCount }}장</span>
+              </div>
+            </div>
+            <span class="group-chevron" :class="{ open: expandedGroups[gi] }">›</span>
+          </div>
+
+          <transition name="grid">
+            <div v-if="expandedGroups[gi]" class="photo-grid">
+              <div
+                v-for="(photo, pi) in group.photos"
+                :key="photo.id"
+                class="photo-item"
+                @click="openModal(photo, group)"
+              >
+                <img :src="photo.thumbnail" :alt="'사진 ' + (pi+1)" loading="lazy" />
+                <span class="photo-time">{{ formatTime(photo.timestamp) }}</span>
+              </div>
+            </div>
+          </transition>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- 모달 -->
+  <transition name="fade">
+    <div v-if="modalPhoto" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-inner">
+        <img class="modal-img" :src="modalPhoto.thumbnail" alt="사진" />
+      </div>
+      <button class="modal-close" @click="closeModal">✕</button>
+      <div class="modal-info">
+        <div class="modal-location">📍 {{ modalGroup && modalGroup.locationLabel }}</div>
+        <div class="modal-time">{{ formatFullTime(modalPhoto.timestamp) }}</div>
+      </div>
+    </div>
+  </transition>
+
+</div>
+
+<script>
+// ── Android → Web 브릿지 (WebView 환경에서 사용) ──
+window._pendingPhotos = null;
+window.DailyLogBridge = {
+  onPhotosReady: function(jsonStr) {
+    if (window._vueApp) {
+      window._vueApp.receivePhotos(jsonStr);
+    } else {
+      window._pendingPhotos = jsonStr;
+    }
+  }
+};
+
+// ── 샘플 데이터 (브라우저/Railway 미리보기용) ──
+function generateSampleData() {
+  const day = new Date();
+  day.setHours(0, 0, 0, 0);
+  const base = day.getTime();
+
+  function dummyThumb(color) {
+    const c = document.createElement('canvas');
+    c.width = 200; c.height = 200;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 200, 200);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.beginPath();
+    ctx.arc(100, 100, 40, 0, Math.PI * 2);
+    ctx.fill();
+    return c.toDataURL('image/jpeg', 0.7);
+  }
+
+  const palettes = [
+    ['#FF6B6B','#FF8E8E','#FFB3B3','#FFCECE','#FF9A9A'],
+    ['#5C7AFF','#7A8FFF','#9EB3FF','#B3C3FF','#6B8AFF'],
+    ['#45C48A','#68D4A8','#8FE4BF','#A8EAD1','#5BCF9A'],
+  ];
+
+  return [
+    {
+      groupId: 'group_1', centerLat: 37.5665, centerLng: 126.9780,
+      locationLabel: '37.5665°N, 126.9780°E',
+      startTime: base + 9 * 3600000, endTime: base + 9 * 3600000 + 45 * 60000,
+      photoCount: 5,
+      photos: palettes[0].map((color, i) => ({
+        id: i + 1, uri: '',
+        timestamp: base + 9 * 3600000 + i * 8 * 60000,
+        lat: 37.5665 + i * 0.0001, lng: 126.9780 + i * 0.0001,
+        thumbnail: dummyThumb(color)
+      }))
+    },
+    {
+      groupId: 'group_2', centerLat: 37.5170, centerLng: 127.0473,
+      locationLabel: '37.5170°N, 127.0473°E',
+      startTime: base + 12 * 3600000, endTime: base + 13 * 3600000 + 20 * 60000,
+      photoCount: 5,
+      photos: palettes[1].map((color, i) => ({
+        id: i + 10, uri: '',
+        timestamp: base + 12 * 3600000 + i * 15 * 60000,
+        lat: 37.5170 + i * 0.0001, lng: 127.0473 + i * 0.0001,
+        thumbnail: dummyThumb(color)
+      }))
+    },
+    {
+      groupId: 'group_3', centerLat: 37.5796, centerLng: 126.9770,
+      locationLabel: '37.5796°N, 126.9770°E',
+      startTime: base + 16 * 3600000, endTime: base + 16 * 3600000 + 30 * 60000,
+      photoCount: 5,
+      photos: palettes[2].map((color, i) => ({
+        id: i + 20, uri: '',
+        timestamp: base + 16 * 3600000 + i * 6 * 60000,
+        lat: 37.5796 + i * 0.0001, lng: 126.9770 + i * 0.0001,
+        thumbnail: dummyThumb(color)
+      }))
+    }
+  ];
+}
+
+// ── Vue 앱 ──
+const app = new Vue({
+  el: '#app',
+  data() {
+    return {
+      loading: true,
+      photoGroups: [],
+      expandedGroups: {},
+      modalPhoto: null,
+      modalGroup: null,
+    };
+  },
+
+  computed: {
+    todayLabel() {
+      const d = new Date();
+      const days = ['일','월','화','수','목','금','토'];
+      return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+    },
+    totalPhotos() {
+      return this.photoGroups.reduce((s, g) => s + (g.photoCount || 0), 0);
+    },
+    dayRange() {
+      if (!this.photoGroups.length) return '-';
+      const all = this.photoGroups.flatMap(g => g.photos || []);
+      if (!all.length) return '-';
+      const ts = all.map(p => p.timestamp).filter(t => t > 0);
+      if (!ts.length) return '-';
+      const diffH = Math.round((Math.max.apply(null, ts) - Math.min.apply(null, ts)) / 3600000);
+      return diffH < 1 ? '1h미만' : `${diffH}h`;
+    },
+  },
+
+  methods: {
+    toggleGroup(idx) {
+      this.$set(this.expandedGroups, idx, !this.expandedGroups[idx]);
+    },
+    groupEmoji(idx) {
+      return ['🏡','☕','🌳','🛍️','🍜','🏖️','🏔️','🎨'][idx % 8];
+    },
+    formatTime(ts) {
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    },
+    formatFullTime(ts) {
+      const d = new Date(ts);
+      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${this.formatTime(ts)}`;
+    },
+    formatTimeRange(start, end) {
+      return start === end ? this.formatTime(start) : `${this.formatTime(start)} ~ ${this.formatTime(end)}`;
+    },
+    openModal(photo, group) {
+      this.modalPhoto = photo;
+      this.modalGroup = group;
+    },
+    closeModal() {
+      this.modalPhoto = null;
+      this.modalGroup = null;
+    },
+    receivePhotos(jsonStr) {
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const groups = Array.isArray(parsed) ? parsed : [];
+        this.photoGroups = groups;
+        if (groups.length > 0) this.$set(this.expandedGroups, 0, true);
+      } catch(e) {
+        console.error('사진 데이터 파싱 오류:', e);
+        this.photoGroups = [];
+      }
+      this.loading = false;
+    },
+  },
+
+  mounted() {
+    window._vueApp = this;
+
+    // Android WebView에서 먼저 데이터가 도착한 경우
+    if (window._pendingPhotos !== null) {
+      this.receivePhotos(window._pendingPhotos);
+      window._pendingPhotos = null;
+      return;
+    }
+
+    // 브라우저(Railway 포함): 샘플 데이터 표시
+    const isAndroidWebView = typeof Android !== 'undefined';
+    if (!isAndroidWebView) {
+      setTimeout(() => {
+        this.receivePhotos(JSON.stringify(generateSampleData()));
+      }, 800);
+    }
+  },
+});
+</script>
+</body>
+</html>
