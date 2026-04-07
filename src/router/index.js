@@ -1,0 +1,21 @@
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+import HomeView from '../views/HomeView.vue'
+import TimeBridgeView from '../views/TimeBridgeView.vue'
+import CinemaView from '../views/CinemaView.vue'
+import MyView from '../views/MyView.vue'
+
+Vue.use(VueRouter)
+
+const routes = [
+  { path: '/', redirect: '/home' },
+  { path: '/home', component: HomeView },
+  { path: '/timebridge', component: TimeBridgeView },
+  { path: '/cinema', component: CinemaView },
+  { path: '/my', component: MyView },
+]
+
+export default new VueRouter({
+  routes,
+  mode: 'hash',
+})
