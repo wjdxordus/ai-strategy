@@ -13,7 +13,6 @@ export default {
   name: 'App',
   components: { GNB },
   mounted() {
-    // Android WebView 브릿지 등록
     window._pendingPhotos = null
     window.DailyLogBridge = {
       onPhotosReady: (jsonStr) => {
@@ -44,24 +43,30 @@ export default {
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 html, body {
   height: 100%;
-  background: #F7F8FC;
-  font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  color: #1A1A2E;
+  background: #ffffff;
+  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  color: #1d1d1f;
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
+
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #ffffff;
 }
+
 .page-view {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
 }
+
 ::-webkit-scrollbar { display: none; }
 </style>
