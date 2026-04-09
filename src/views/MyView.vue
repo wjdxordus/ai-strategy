@@ -1,81 +1,80 @@
 <template>
   <div class="my">
 
-    <!-- 헤더 -->
-    <div class="header">
-      <div class="header-title">MY</div>
-    </div>
-
-    <!-- 프로필 -->
-    <div class="profile">
-      <div class="avatar">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-      </div>
-      <div class="profile-name">나의 일상기록</div>
-    </div>
+    <!-- 히어로 헤더 -->
+    <section class="hero">
+      <p class="hero-eyebrow">나의 일상기록</p>
+      <h1 class="hero-title">MY</h1>
+    </section>
 
     <!-- 통계 -->
-    <div class="stats">
+    <section class="stats-section">
       <div class="stat">
-        <div class="stat-val">{{ totalRecords }}</div>
-        <div class="stat-key">전체 기록</div>
+        <p class="stat-num">{{ totalRecords }}</p>
+        <p class="stat-label">전체 기록</p>
       </div>
-      <div class="stat-divider" />
+      <div class="stat-rule" />
       <div class="stat">
-        <div class="stat-val">{{ uniqueLocations }}</div>
-        <div class="stat-key">방문 장소</div>
+        <p class="stat-num">{{ uniqueLocations }}</p>
+        <p class="stat-label">방문 장소</p>
       </div>
-      <div class="stat-divider" />
+      <div class="stat-rule" />
       <div class="stat">
-        <div class="stat-val">{{ activeDays }}</div>
-        <div class="stat-key">기록한 날</div>
+        <p class="stat-num">{{ activeDays }}</p>
+        <p class="stat-label">기록한 날</p>
       </div>
-    </div>
+    </section>
 
-    <!-- 메뉴 그룹 -->
-    <div class="group-label">설정</div>
-    <div class="menu-group">
-      <div class="menu-row">
-        <span class="menu-text">알림 설정</span>
-        <svg class="menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 설정 -->
+    <p class="group-label">설정</p>
+    <section class="list-section">
+      <div class="list-row">
+        <span class="list-title">알림 설정</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </div>
-      <div class="menu-sep" />
-      <div class="menu-row">
-        <span class="menu-text">개인정보 보호</span>
-        <svg class="menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="list-sep" />
+      <div class="list-row">
+        <span class="list-title">개인정보 보호</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </div>
-      <div class="menu-sep" />
-      <div class="menu-row">
-        <span class="menu-text">데이터 백업</span>
-        <svg class="menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="list-sep" />
+      <div class="list-row">
+        <span class="list-title">데이터 백업</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </div>
-    </div>
+    </section>
 
-    <div class="group-label">앱 정보</div>
-    <div class="menu-group">
-      <div class="menu-row">
-        <span class="menu-text">버전 정보</span>
-        <span class="menu-value">1.0.0</span>
+    <p class="group-label">앱 정보</p>
+    <section class="list-section">
+      <div class="list-row">
+        <span class="list-title">버전 정보</span>
+        <span class="list-value">1.0.0</span>
       </div>
-      <div class="menu-sep" />
-      <div class="menu-row">
-        <span class="menu-text">이용약관</span>
-        <svg class="menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="list-sep" />
+      <div class="list-row">
+        <span class="list-title">이용약관</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"/>
         </svg>
       </div>
-    </div>
+      <div class="list-sep" />
+      <div class="list-row">
+        <span class="list-title">오픈소스 라이선스</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+    </section>
 
-    <div style="height: 80px" />
+    <p class="footer-note">일상기록 1.0.0 · © 2026</p>
+
+    <div style="height: 60px" />
   </div>
 </template>
 
@@ -95,113 +94,103 @@ export default {
 <style scoped>
 .my { background: #f5f5f7; min-height: 100%; }
 
-/* 헤더 */
-.header {
-  padding: 28px 24px 0;
-  background: #f5f5f7;
+/* ─── 히어로 ─────────────────────────────────── */
+.hero {
+  padding: 52px 24px 40px;
+  background: #fff;
 }
-.header-title {
-  font-size: 28px;
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6e6e73;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.hero-title {
+  font-size: 48px;
   font-weight: 700;
   color: #1d1d1f;
-  letter-spacing: -0.5px;
+  letter-spacing: -1.5px;
+  line-height: 1.05;
 }
 
-/* 프로필 */
-.profile {
+/* ─── 통계 ──────────────────────────────────── */
+.stats-section {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 20px 16px 0;
-  padding: 20px;
   background: #fff;
-  border-radius: 16px;
-}
-.avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #f5f5f7;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #aeaeb2;
-  flex-shrink: 0;
-}
-.profile-name {
-  font-size: 17px;
-  font-weight: 600;
-  color: #1d1d1f;
-  letter-spacing: -0.3px;
-}
-
-/* 통계 */
-.stats {
-  display: flex;
-  align-items: center;
-  margin: 10px 16px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 16px;
+  margin-top: 1px;
+  padding: 28px 0;
 }
 .stat {
   flex: 1;
   text-align: center;
 }
-.stat-val {
-  font-size: 24px;
+.stat-num {
+  font-size: 36px;
   font-weight: 700;
   color: #1d1d1f;
-  letter-spacing: -0.5px;
-  margin-bottom: 3px;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin-bottom: 6px;
 }
-.stat-key {
+.stat-label {
   font-size: 11px;
-  color: #86868b;
   font-weight: 500;
+  color: #6e6e73;
+  letter-spacing: 0.1px;
 }
-.stat-divider {
+.stat-rule {
   width: 0.5px;
-  height: 36px;
-  background: #e5e5ea;
+  height: 40px;
+  background: rgba(0,0,0,0.12);
 }
 
-/* 메뉴 */
+/* ─── 그룹 라벨 ─────────────────────────────── */
 .group-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #86868b;
-  padding: 18px 28px 6px;
-  letter-spacing: 0.2px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #6e6e73;
+  padding: 28px 20px 8px;
+  letter-spacing: -0.1px;
 }
-.menu-group {
-  margin: 0 16px;
+
+/* ─── 리스트 섹션 ───────────────────────────── */
+.list-section {
   background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
+  margin: 0;
 }
-.menu-row {
+.list-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 14px 20px;
   cursor: pointer;
+  transition: background 0.15s;
 }
-.menu-row:active { background: #f5f5f7; }
-.menu-text {
+.list-row:active { background: #f5f5f7; }
+.list-title {
   font-size: 15px;
   color: #1d1d1f;
-  font-weight: 400;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.2px;
 }
-.menu-chevron { color: #c7c7cc; }
-.menu-value {
-  font-size: 14px;
-  color: #86868b;
+.list-value {
+  font-size: 15px;
+  color: #6e6e73;
 }
-.menu-sep {
+.list-sep {
   height: 0.5px;
-  background: #e5e5ea;
-  margin: 0 18px;
+  background: rgba(0,0,0,0.1);
+  margin-left: 20px;
+}
+
+/* ─── 푸터 ──────────────────────────────────── */
+.footer-note {
+  text-align: center;
+  font-size: 12px;
+  color: #aeaeb2;
+  padding: 28px 20px 0;
+  letter-spacing: -0.1px;
 }
 </style>
