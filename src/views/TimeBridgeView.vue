@@ -15,6 +15,7 @@
           :class="{ active: mainTab === 'record_archive' }"
           @click="setMainTab('record_archive')"
         >Record Archive</button>
+        <div class="tb-main-tab-sep" />
         <button
           class="tb-main-tab"
           :class="{ active: mainTab === 'moment_track' }"
@@ -192,16 +193,58 @@
     </div>
 
     <!-- ─── Moment Track ─────────────────────────── -->
-    <div v-else-if="mainTab === 'moment_track'" class="tb-scroll">
-      <div class="moment-coming-soon">
-        <div class="moment-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
+    <div v-else-if="mainTab === 'moment_track'" class="moment-track-wrap">
+
+      <!-- 지도 영역 (sticky) -->
+      <div ref="momentMapSection" class="moment-map-section" :style="{ top: headerHeight + 'px' }">
+        <p class="moment-tagline">나의 기록으로 지도를 따라 다시 여행해보세요</p>
+        <div class="moment-map-head">
+          <span class="moment-map-title">내 지도</span>
+          <span class="moment-place-count">{{ mapRecords.length }}개 장소</span>
         </div>
-        <p class="moment-title">준비 중</p>
-        <p class="moment-desc">특별한 순간들이 모여<br>하나의 타임라인이 됩니다.</p>
+        <div ref="naverMapDiv" class="moment-naver-map">
+          <div v-if="mapLoading" class="moment-map-loading">
+            <div class="moment-map-spinner" />
+            <span>지도 불러오는 중...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 기록 카드 목록 -->
+      <div class="moment-cards-list">
+        <div v-if="!allRecords.length" class="moment-empty">
+          <p class="moment-empty-text">기록이 없어요</p>
+        </div>
+        <div
+          v-for="r in allRecords"
+          :key="r.id"
+          class="moment-card-outer"
+          :class="{ 'is-active': activeMarkerId === r.id }"
+          :data-record-id="r.id"
+          @click="selectRecord(r)"
+        >
+          <div class="moment-card">
+            <div class="moment-card-photo-wrap">
+              <img v-if="r.thumbnail" :src="r.thumbnail" class="moment-card-photo" />
+              <div v-else class="moment-card-gradient" :style="{ background: r.gradient || 'var(--nm-s1)' }" />
+            </div>
+            <div class="moment-card-body">
+              <div class="moment-card-meta">
+                <span class="moment-card-weather">{{ r.weather && r.weather.emoji }}</span>
+                <span class="moment-card-time">{{ r.time }}</span>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" class="moment-card-pin">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <span class="moment-card-location">{{ r.location }}</span>
+              </div>
+              <p class="moment-card-text">{{ r.aiRecord }}</p>
+              <div class="moment-card-tags">
+                <span v-for="tag in (r.categoryTags || []).slice(0, 3)" :key="tag" class="moment-card-tag">#{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="height: 80px" />
       </div>
     </div>
 
@@ -220,7 +263,23 @@ export default {
       mainTab: 'record_archive',
       viewMode: 'calendar',
       selectedDate: null,
+      // Moment Track
+      naverMap: null,
+      naverMarkers: {},
+      activeMarkerId: null,
+      mapLoading: false,
+      headerHeight: 140,
+      _scrollHandler: null,
     }
+  },
+  watch: {
+    mainTab(val) {
+      if (val === 'moment_track') {
+        this.$nextTick(() => this.initMomentTrack())
+      } else {
+        this.removeScrollSync()
+      }
+    },
   },
   computed: {
     todayStr() {
@@ -315,6 +374,16 @@ export default {
     hasNextDate() {
       return this.allDates.indexOf(this.selectedDate) > 0
     },
+    mapRecords() {
+      return this.allRecords.filter(r => r.lat && r.lng)
+    },
+  },
+  beforeDestroy() {
+    this.removeScrollSync()
+    if (this.naverMap && window.naver) {
+      window.naver.maps.Event.clearListeners(this.naverMap)
+    }
+    this.naverMap = null
   },
   methods: {
     setMainTab(tab) {
@@ -335,6 +404,157 @@ export default {
     thumbStyle(record) {
       if (record.thumbnail) return { backgroundImage: `url(${record.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }
       return { background: record.gradient || 'var(--nm-s1)' }
+    },
+
+    // ── Moment Track ────────────────────────────
+    initMomentTrack() {
+      // 헤더 높이 측정
+      const header = this.$el.querySelector('.tb-header')
+      if (header) this.headerHeight = header.offsetHeight
+
+      // Naver Maps SDK 로드
+      if (window.naver && window.naver.maps) {
+        this.$nextTick(() => this.initNaverMap())
+      } else if (!document.getElementById('naver-maps-sdk')) {
+        this.mapLoading = true
+        const script = document.createElement('script')
+        script.id = 'naver-maps-sdk'
+        script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=mxxnjmmj8h'
+        script.onload = () => { this.mapLoading = false; this.$nextTick(() => this.initNaverMap()) }
+        script.onerror = () => { this.mapLoading = false }
+        document.head.appendChild(script)
+      } else {
+        // 이미 로딩 중 — 완료 대기
+        const poll = setInterval(() => {
+          if (window.naver && window.naver.maps) {
+            clearInterval(poll)
+            this.$nextTick(() => this.initNaverMap())
+          }
+        }, 200)
+      }
+
+      this.setupScrollSync()
+    },
+
+    initNaverMap() {
+      if (!this.$refs.naverMapDiv || !window.naver) return
+      if (this.naverMap) return  // 이미 초기화됨
+
+      const center = this.mapRecords.length
+        ? new window.naver.maps.LatLng(this.mapRecords[0].lat, this.mapRecords[0].lng)
+        : new window.naver.maps.LatLng(37.5665, 126.9780)
+
+      this.naverMap = new window.naver.maps.Map(this.$refs.naverMapDiv, {
+        center,
+        zoom: 13,
+        zoomControl: true,
+        zoomControlOptions: { position: window.naver.maps.Position.RIGHT_CENTER },
+        scaleControl: false,
+        mapDataControl: false,
+      })
+
+      this.createMarkers()
+
+      if (this.mapRecords.length) {
+        this.activeMarkerId = this.mapRecords[0].id
+        this.updateActiveMarker()
+      }
+    },
+
+    buildMarkerContent(record, isActive) {
+      const size = isActive ? 58 : 46
+      const border = isActive ? '3px solid #6678e0' : '2.5px solid #fff'
+      const shadow = isActive
+        ? '0 4px 14px rgba(102,120,224,0.55)'
+        : '0 2px 7px rgba(0,0,0,0.28)'
+      const inner = record.thumbnail
+        ? `<img src="${record.thumbnail}" style="width:100%;height:100%;object-fit:cover;display:block" />`
+        : `<div style="width:100%;height:100%;background:${record.gradient || '#888'}"></div>`
+      return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;border:${border};box-shadow:${shadow};cursor:pointer;">${inner}</div>`
+    },
+
+    createMarkers() {
+      Object.values(this.naverMarkers).forEach(m => m.setMap(null))
+      this.naverMarkers = {}
+
+      for (const record of this.mapRecords) {
+        const marker = new window.naver.maps.Marker({
+          position: new window.naver.maps.LatLng(record.lat, record.lng),
+          map: this.naverMap,
+          icon: {
+            content: this.buildMarkerContent(record, false),
+            anchor: new window.naver.maps.Point(23, 23),
+          },
+        })
+        this.naverMarkers[record.id] = marker
+      }
+    },
+
+    updateActiveMarker() {
+      Object.entries(this.naverMarkers).forEach(([id, marker]) => {
+        const isActive = id === this.activeMarkerId
+        const record = this.allRecords.find(r => r.id === id)
+        if (record) {
+          const size = isActive ? 58 : 46
+          marker.setIcon({
+            content: this.buildMarkerContent(record, isActive),
+            anchor: new window.naver.maps.Point(size / 2, size / 2),
+          })
+        }
+      })
+    },
+
+    selectRecord(record) {
+      if (!record.lat || !record.lng || !this.naverMap) return
+      this.naverMap.panTo(new window.naver.maps.LatLng(record.lat, record.lng))
+      this.activeMarkerId = record.id
+      this.updateActiveMarker()
+    },
+
+    setupScrollSync() {
+      this.removeScrollSync()
+      const pageView = document.querySelector('.page-view')
+      if (!pageView) return
+      this._scrollHandler = () => this.onPageScroll()
+      pageView.addEventListener('scroll', this._scrollHandler, { passive: true })
+    },
+
+    removeScrollSync() {
+      if (!this._scrollHandler) return
+      const pageView = document.querySelector('.page-view')
+      if (pageView) pageView.removeEventListener('scroll', this._scrollHandler)
+      this._scrollHandler = null
+    },
+
+    onPageScroll() {
+      if (this.mainTab !== 'moment_track' || !this.naverMap) return
+      const cards = this.$el.querySelectorAll('.moment-card-outer')
+      if (!cards.length) return
+
+      const mapSection = this.$refs.momentMapSection
+      const threshold = mapSection
+        ? mapSection.getBoundingClientRect().bottom + 50
+        : 420
+
+      let bestCard = null
+      let minDist = Infinity
+      cards.forEach(card => {
+        const rect = card.getBoundingClientRect()
+        const dist = Math.abs(rect.top - threshold)
+        if (dist < minDist) { minDist = dist; bestCard = card }
+      })
+
+      if (bestCard) {
+        const id = bestCard.dataset.recordId
+        if (id && id !== this.activeMarkerId) {
+          const record = this.allRecords.find(r => r.id === id)
+          if (record && record.lat && record.lng) {
+            this.naverMap.panTo(new window.naver.maps.LatLng(record.lat, record.lng))
+            this.activeMarkerId = id
+            this.updateActiveMarker()
+          }
+        }
+      }
     },
   },
 }
@@ -360,24 +580,25 @@ export default {
   line-height: 1.1;
 }
 
-/* ─── 메인 탭 (언더라인 스타일) ──────────────── */
+/* ─── 메인 탭 (MY 탭 동일 스타일) ───────────── */
 .tb-main-tabs {
-  display: flex; gap: 20px;
-  padding: 14px 20px 0;
+  display: flex; align-items: stretch;
   border-bottom: 1.5px solid var(--nm-s1);
+  margin-top: 14px;
 }
 .tb-main-tab {
-  border: none; background: none; padding: 0 0 12px;
-  font-size: 14px; font-weight: 600; font-family: inherit;
-  color: var(--text-sub); letter-spacing: -0.2px;
+  flex: 1; padding: 10px 0 12px;
+  border: none; background: none; font-family: inherit;
+  font-size: 14px; font-weight: 600; color: var(--text-sub);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
-  border-bottom: 2px solid transparent;
+  border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
   transition: color 0.2s, border-color 0.2s;
-  margin-bottom: -1.5px;
+  letter-spacing: -0.2px;
 }
-.tb-main-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--accent);
+.tb-main-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tb-main-tab-sep {
+  width: 1px; background: var(--nm-s1);
+  margin: 8px 0 4px; flex-shrink: 0;
 }
 
 /* ─── 서브 행 ────────────────────────────────── */
@@ -615,24 +836,110 @@ export default {
 .detail-tag-category { box-shadow: var(--nm-out-sm); color: var(--accent); }
 
 /* ─── Moment Track ───────────────────────────── */
-.moment-coming-soon {
-  display: flex; flex-direction: column;
-  align-items: center; padding-top: 100px; gap: 14px;
+.moment-track-wrap { background: var(--nm-bg); }
+
+/* 지도 영역 — sticky (헤더 바로 아래에 고정) */
+.moment-map-section {
+  position: sticky;
+  z-index: 15;
+  background: var(--nm-bg);
+  box-shadow: 0 4px 16px rgba(195,201,212,0.45);
+  padding-bottom: 10px;
 }
-.moment-icon {
-  width: 72px; height: 72px;
-  background: var(--nm-bg); box-shadow: var(--nm-in);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--accent);
+.moment-tagline {
+  font-size: 13px; color: var(--text-sub);
+  letter-spacing: -0.2px; padding: 10px 20px 0;
 }
-.moment-title {
-  font-size: 20px; font-weight: 700;
+.moment-map-head {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px 8px;
+}
+.moment-map-title {
+  font-size: 18px; font-weight: 700;
   color: var(--text); letter-spacing: -0.4px;
 }
-.moment-desc {
-  font-size: 14px; color: var(--text-sub);
-  letter-spacing: -0.1px; line-height: 1.65;
-  text-align: center;
+.moment-place-count {
+  font-size: 12px; font-weight: 600;
+  color: var(--accent);
+  background: var(--nm-bg); box-shadow: var(--nm-out-sm);
+  border-radius: 20px; padding: 4px 12px;
+}
+.moment-naver-map {
+  height: 240px;
+  margin: 0 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--nm-out);
+  position: relative;
+  background: var(--nm-s1);
+}
+.moment-map-loading {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  background: var(--nm-bg);
+}
+.moment-map-spinner {
+  width: 28px; height: 28px;
+  border: 3px solid var(--nm-s1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.moment-map-loading span {
+  font-size: 13px; color: var(--text-sub);
+}
+
+/* 기록 카드 목록 */
+.moment-cards-list { padding: 16px 16px 0; }
+.moment-empty {
+  display: flex; justify-content: center; padding: 60px 0;
+}
+.moment-empty-text { font-size: 15px; color: var(--text-sub); }
+
+.moment-card-outer {
+  margin-bottom: 14px;
+  border-radius: 18px;
+  box-shadow: var(--nm-out);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.2s;
+}
+.moment-card-outer.is-active {
+  box-shadow: 0 0 0 2px var(--accent), var(--nm-out);
+}
+.moment-card-outer:active { opacity: 0.88; }
+.moment-card { border-radius: 18px; overflow: hidden; background: var(--nm-bg); }
+
+.moment-card-photo-wrap { width: 100%; }
+.moment-card-photo {
+  width: 100%; display: block;
+  object-fit: cover; aspect-ratio: 16 / 9;
+}
+.moment-card-gradient { width: 100%; aspect-ratio: 16 / 9; }
+
+.moment-card-body { padding: 12px 16px 14px; }
+.moment-card-meta {
+  display: flex; align-items: center; gap: 5px; margin-bottom: 7px;
+}
+.moment-card-weather { font-size: 14px; flex-shrink: 0; }
+.moment-card-time { font-size: 12px; font-weight: 500; color: var(--text); flex-shrink: 0; }
+.moment-card-pin { color: var(--text-sub); flex-shrink: 0; }
+.moment-card-location {
+  font-size: 12px; font-weight: 500; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.moment-card-text {
+  font-size: 14px; color: var(--text); line-height: 1.6;
+  letter-spacing: -0.2px; margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.moment-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.moment-card-tag {
+  font-size: 11px; font-weight: 500; color: var(--accent);
+  background: var(--nm-bg); box-shadow: var(--nm-out-sm);
+  border-radius: 20px; padding: 3px 10px;
 }
 </style>
