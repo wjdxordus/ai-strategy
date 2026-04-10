@@ -4,12 +4,12 @@
     <!-- ── 헤더 (sticky) ── -->
     <div class="cinema-header">
       <div class="cinema-title-row">
-        <h2 class="cinema-title">Cinema</h2>
+        <h2 class="cinema-title">시네마</h2>
       </div>
       <div class="cinema-tab-bar">
-        <div class="cinema-tab" :class="{ active: tab === 'story' }" @click="tab = 'story'">Story</div>
+        <div class="cinema-tab" :class="{ active: tab === 'story' }" @click="tab = 'story'">스토리</div>
         <div class="cinema-tab-sep" />
-        <div class="cinema-tab" :class="{ active: tab === 'photobook' }" @click="tab = 'photobook'">Photo Book</div>
+        <div class="cinema-tab" :class="{ active: tab === 'photobook' }" @click="tab = 'photobook'">포토북</div>
       </div>
     </div>
 

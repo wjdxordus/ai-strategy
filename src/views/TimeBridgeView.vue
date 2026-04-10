@@ -5,7 +5,7 @@
     <div class="tb-header">
       <!-- 타이틀 -->
       <div class="tb-title-row">
-        <h1 class="tb-title">Time Bridge</h1>
+        <h1 class="tb-title">타임브릿지</h1>
       </div>
 
       <!-- 메인 탭 -->
@@ -14,13 +14,13 @@
           class="tb-main-tab"
           :class="{ active: mainTab === 'record_archive' }"
           @click="setMainTab('record_archive')"
-        >Record Archive</button>
+        >기록함</button>
         <div class="tb-main-tab-sep" />
         <button
           class="tb-main-tab"
           :class="{ active: mainTab === 'moment_track' }"
           @click="setMainTab('moment_track')"
-        >Moment Track</button>
+        >모멘트 트랙</button>
       </div>
 
       <!-- 서브 행 (Record Archive 전용) -->

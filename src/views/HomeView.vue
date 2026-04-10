@@ -5,7 +5,7 @@
     <section class="record-section">
       <div class="section-header">
         <div class="section-title-row">
-          <h2 class="section-title">Today's Record</h2>
+          <h2 class="section-title">오늘의 기록</h2>
           <span class="section-date">{{ todayLabel }}</span>
         </div>
         <p class="section-desc">골든레코드AI가 셀렉트한 베스트포토와 자동 기록입니다.</p>
@@ -30,7 +30,7 @@
     <section v-if="memoryRecords.length" class="record-section memory-section">
       <div class="section-header">
         <div class="section-title-row">
-          <h2 class="section-title">Memory Record</h2>
+          <h2 class="section-title">1년전 오늘</h2>
           <span class="section-date">{{ memoryLabel }}</span>
         </div>
         <p class="section-desc">1년 전 오늘 레코드가 있어요</p>

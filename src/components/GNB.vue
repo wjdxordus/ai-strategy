@@ -43,7 +43,7 @@
           <circle cx="12" cy="7" r="4"/>
         </svg>
       </div>
-      <span class="gnb-label">MY</span>
+      <span class="gnb-label">마이</span>
     </router-link>
   </nav>
 </template>

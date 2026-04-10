@@ -3,7 +3,7 @@
 
     <!-- ─── Sticky Header ──────────────────────── -->
     <div class="my-header">
-      <h1 class="my-title">MY</h1>
+      <h1 class="my-title">마이</h1>
       <div class="my-tab-bar">
         <button
           class="my-tab"
