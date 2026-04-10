@@ -50,57 +50,38 @@
 
 <style scoped>
 .gnb {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: fixed; bottom: 0; left: 0; right: 0;
   height: calc(58px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: var(--nm-bg);
-  box-shadow: -4px -4px 12px #ffffff, 4px -4px 12px #c3c9d4;
-  display: flex;
-  align-items: flex-start;
-  padding-top: 8px;
-  z-index: 200;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: flex-start;
+  padding-top: 8px; z-index: 200;
 }
 
 .gnb-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  text-decoration: none;
-  color: var(--text-sub);
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+  text-decoration: none; color: var(--text-sub);
   transition: color 0.2s;
 }
 
 .gnb-item.active { color: var(--accent); }
 
 .gnb-icon-wrap {
-  width: 38px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  transition: box-shadow 0.2s, background 0.2s;
+  width: 38px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius); transition: background 0.2s;
 }
 
 .gnb-item.active .gnb-icon-wrap {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-in-sm);
+  background: var(--accent-light);
 }
 
-.gnb-icon {
-  width: 20px;
-  height: 20px;
-}
+.gnb-icon { width: 20px; height: 20px; }
 
 .gnb-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: -0.1px;
-  white-space: nowrap;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap;
 }
 </style>

@@ -60,84 +60,78 @@ export default { name: 'CinemaView' }
 </script>
 
 <style scoped>
-.cinema { background: var(--nm-bg); min-height: 100%; }
+.cinema { background: var(--bg); min-height: 100%; }
 
 /* ─── 히어로 ──────────────────────────────── */
-.hero {
-  padding: 52px 24px 44px;
-  background: var(--nm-bg);
-}
+.hero { padding: 52px 24px 44px; background: var(--bg); }
 .hero-eyebrow {
-  font-size: 11px; font-weight: 600;
-  color: var(--text-sub); letter-spacing: 0.6px;
+  font-size: 10px; font-weight: 600;
+  color: var(--text-sub); letter-spacing: 1.5px;
   text-transform: uppercase; margin-bottom: 10px;
 }
 .hero-title {
-  font-size: 44px; font-weight: 700;
-  color: var(--text); letter-spacing: -1.4px;
-  line-height: 1.05; margin-bottom: 10px;
+  font-size: 44px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.8px;
+  line-height: 1.04; margin-bottom: 10px;
 }
 .hero-sub {
   font-size: 16px; font-weight: 400;
-  color: var(--text-sub); letter-spacing: -0.2px;
+  color: var(--text-sub); letter-spacing: -0.16px;
 }
 
 /* ─── 예고 카드 ───────────────────────────── */
 .teaser { padding: 0 20px 28px; }
 .teaser-card {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out);
-  border-radius: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-xl);
   padding: 44px 28px;
   display: flex; flex-direction: column;
   align-items: center; text-align: center; gap: 14px;
 }
 .teaser-icon {
   width: 72px; height: 72px;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-in);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: var(--accent); margin-bottom: 4px;
 }
 .teaser-label {
-  font-size: 22px; font-weight: 700;
+  font-size: 22px; font-weight: 600;
   color: var(--text); letter-spacing: -0.5px;
 }
 .teaser-desc {
-  font-size: 15px; color: var(--text-sub);
-  letter-spacing: -0.2px; line-height: 1.6;
+  font-size: 16px; color: var(--text-sub);
+  letter-spacing: -0.16px; line-height: 1.6;
 }
 
 /* ─── 기능 카드 ───────────────────────────── */
-.features {
-  padding: 0 20px 40px;
-  display: flex; flex-direction: column; gap: 12px;
-}
+.features { padding: 0 20px 40px; display: flex; flex-direction: column; gap: 10px; }
 .feature-card {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border-radius: 18px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
   padding: 20px 18px;
   display: flex; align-items: flex-start; gap: 16px;
 }
 .feature-icon-wrap {
   width: 44px; height: 44px;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-in-sm);
-  border-radius: 14px;
+  background: var(--accent-light);
+  border: 1px solid rgba(20,110,245,0.2);
+  border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.feature-icon {
-  font-size: 18px; color: var(--accent);
-}
+.feature-icon { font-size: 18px; color: var(--accent); }
 .feature-title {
   font-size: 15px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.3px; margin-bottom: 4px;
+  color: var(--text); letter-spacing: -0.16px; margin-bottom: 4px;
 }
 .feature-desc {
-  font-size: 13px; color: var(--text-sub);
-  line-height: 1.6; letter-spacing: -0.1px;
+  font-size: 14px; color: var(--text-sub);
+  line-height: 1.60; letter-spacing: -0.16px;
 }
 </style>

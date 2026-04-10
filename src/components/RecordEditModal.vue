@@ -194,7 +194,7 @@ export default {
 /* ─── 풀스크린 ──────────────────────────── */
 .edit-screen {
   position: fixed; inset: 0; z-index: 500;
-  background: var(--nm-bg);
+  background: var(--bg);
   display: flex; flex-direction: column;
   padding-top: env(safe-area-inset-top);
 }
@@ -203,39 +203,31 @@ export default {
 .edit-header {
   display: flex; align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  flex-shrink: 0;
-  background: var(--nm-bg);
-  box-shadow: 0 2px 10px rgba(195,201,212,0.5);
+  padding: 14px 18px; flex-shrink: 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 .header-date {
-  font-size: 16px; font-weight: 700;
+  font-size: 15px; font-weight: 600;
   color: var(--text); letter-spacing: -0.4px;
 }
 .btn-icon {
   width: 36px; height: 36px;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border: none; border-radius: 50%;
-  color: var(--text-sub);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 50%; color: var(--text-sub);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; padding: 0;
-  -webkit-tap-highlight-color: transparent;
+  cursor: pointer; padding: 0; -webkit-tap-highlight-color: transparent;
 }
-.btn-icon:active { box-shadow: var(--nm-in-sm); }
+.btn-icon:active { background: #f5f5f5; }
 .btn-done {
-  border: none;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  color: var(--accent);
-  font-size: 14px; font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 20px;
-  cursor: pointer; letter-spacing: -0.2px;
+  background: var(--accent); border: 1px solid var(--accent);
+  color: #fff; font-size: 14px; font-weight: 600;
+  padding: 8px 18px; border-radius: var(--radius-pill);
+  cursor: pointer; letter-spacing: -0.16px; font-family: inherit;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-done:disabled { color: var(--text-sub); }
-.btn-done:not(:disabled):active { box-shadow: var(--nm-in-sm); }
+.btn-done:disabled { background: var(--bg); border-color: var(--border); color: var(--text-sub); }
+.btn-done:not(:disabled):active { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 /* ─── 스크롤 영역 ────────────────────────── */
 .edit-body {
@@ -247,11 +239,10 @@ export default {
 /* ─── 메타 행 ───────────────────────────── */
 .meta-row {
   display: flex; align-items: center; gap: 6px;
-  padding: 16px 20px 6px;
-  background: var(--nm-bg);
+  padding: 16px 20px 6px; background: var(--bg);
 }
 .meta-weather { font-size: 16px; flex-shrink: 0; }
-.meta-time { font-size: 13px; font-weight: 500; color: var(--text); flex-shrink: 0; }
+.meta-time { font-size: 13px; font-weight: 500; color: var(--text-mid); flex-shrink: 0; }
 .meta-pin { color: var(--text-sub); flex-shrink: 0; }
 .meta-location {
   font-size: 13px; font-weight: 500; color: var(--text);
@@ -263,36 +254,33 @@ export default {
 
 /* ─── 기록 textarea ─────────────────────── */
 .record-textarea {
-  width: 100%;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-in);
-  border: none; border-radius: 16px;
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
   padding: 14px 16px;
   font-size: 15px; font-weight: 400;
-  color: var(--text); line-height: 1.65;
-  letter-spacing: -0.2px; font-family: inherit;
+  color: var(--text); line-height: 1.60;
+  letter-spacing: -0.16px; font-family: inherit;
   resize: none; outline: none; -webkit-appearance: none;
+  transition: border-color 0.2s;
 }
+.record-textarea:focus { border-color: var(--accent); }
 .record-textarea::placeholder { color: var(--text-sub); }
 
 /* ─── 사진 ──────────────────────────────── */
 .photo-outer {
-  border-radius: 20px;
-  box-shadow: var(--nm-out);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
 .photo-wrap {
-  position: relative; border-radius: 20px; overflow: hidden;
-  background: var(--nm-bg);
+  position: relative; border-radius: var(--radius-xl); overflow: hidden;
+  background: var(--bg);
 }
-.photo-img {
-  width: 100%; display: block;
-  object-fit: cover; aspect-ratio: 4 / 3;
-}
+.photo-img { width: 100%; display: block; object-fit: cover; aspect-ratio: 4 / 3; }
 .photo-placeholder { width: 100%; aspect-ratio: 4 / 3; }
 .btn-photo-x {
   position: absolute; top: 10px; right: 10px;
-  width: 28px; height: 28px; border-radius: 50%;
-  border: none;
+  width: 28px; height: 28px; border-radius: 50%; border: none;
   background: rgba(0,0,0,0.45);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   color: #fff; display: flex; align-items: center; justify-content: center;
@@ -301,18 +289,19 @@ export default {
 .btn-photo-x:active { background: rgba(0,0,0,0.7); }
 
 /* ─── 태그 ──────────────────────────────── */
-.tags-section {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-}
+.tags-section { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .tag {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 6px 8px 6px 11px;
-  border-radius: 20px; font-size: 12px; font-weight: 500;
+  padding: 5px 8px 5px 11px;
+  border-radius: var(--radius-pill); font-size: 12px; font-weight: 500;
   letter-spacing: -0.1px;
-  background: var(--nm-bg);
+  border: 1px solid var(--border); background: var(--bg);
 }
-.tag-emotion { box-shadow: var(--nm-out-sm); color: var(--text); }
-.tag-category { box-shadow: var(--nm-out-sm); color: var(--accent); }
+.tag-emotion { color: var(--text-mid); }
+.tag-category {
+  color: var(--accent);
+  border-color: rgba(20,110,245,0.25); background: var(--accent-light);
+}
 .tag-del {
   display: flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border: none; background: none;
@@ -321,36 +310,33 @@ export default {
 }
 .tag-del:active { opacity: 1; }
 .btn-add-tag {
-  border: none;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border-radius: 20px;
-  padding: 6px 14px;
-  font-size: 12px; font-weight: 600;
-  color: var(--accent);
-  cursor: pointer; letter-spacing: -0.1px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px; font-size: 12px; font-weight: 600; font-family: inherit;
+  color: var(--accent); cursor: pointer; letter-spacing: -0.1px;
   -webkit-tap-highlight-color: transparent;
 }
-.btn-add-tag:active { box-shadow: var(--nm-in-sm); }
+.btn-add-tag:active { background: var(--accent-light); border-color: rgba(20,110,245,0.25); }
 
 /* ─── 분석 팝업 ─────────────────────────── */
 .analyzing-overlay {
   position: fixed; inset: 0;
-  background: rgba(232,236,240,0.75);
+  background: rgba(255,255,255,0.85);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center; z-index: 600;
 }
 .analyzing-card {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out);
-  border-radius: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-xl);
   padding: 36px 40px;
   display: flex; flex-direction: column;
   align-items: center; gap: 18px; min-width: 220px;
 }
 .analyzing-spinner {
   width: 32px; height: 32px;
-  border: 3px solid var(--nm-s1);
+  border: 3px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -358,7 +344,7 @@ export default {
 @keyframes spin { to { transform: rotate(360deg); } }
 .analyzing-text {
   font-size: 15px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.3px;
+  color: var(--text); letter-spacing: -0.16px;
   line-height: 1.55; text-align: center;
 }
 

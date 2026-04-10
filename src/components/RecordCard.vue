@@ -72,118 +72,81 @@ export default {
 </script>
 
 <style scoped>
-/* ─── 외부 래퍼 (뉴모피즘 shadow) ─────────── */
+/* ─── 외부 래퍼 ─────────────────────────── */
 .record-card-outer {
-  border-radius: 22px;
-  box-shadow: var(--nm-out);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
   flex-shrink: 0;
-  background: var(--nm-bg);
+  background: var(--bg);
 }
 
 /* ─── 내부 카드 (이미지 클리핑) ────────────── */
 .record-card {
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  background: var(--nm-bg);
+  background: var(--bg);
 }
 
 /* ─── 사진 ──────────────────────────────── */
 .card-photo {
-  position: relative;
-  width: 100%;
+  position: relative; width: 100%;
   aspect-ratio: 4 / 3;
-  background-size: cover;
-  background-position: center;
+  background-size: cover; background-position: center;
 }
 .photo-scrim {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background:
     linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 25%),
     linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 40%, transparent 65%);
 }
 .photo-meta {
-  position: absolute;
-  bottom: 14px;
-  left: 14px;
-  right: 14px;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  overflow: hidden;
+  position: absolute; bottom: 14px; left: 14px; right: 14px;
+  z-index: 1; display: flex; align-items: center; gap: 5px; overflow: hidden;
 }
 .meta-weather { font-size: 14px; flex-shrink: 0; }
 .meta-time { font-size: 11px; color: rgba(255,255,255,0.72); flex-shrink: 0; }
 .meta-sep { flex-shrink: 0; width: 1px; height: 10px; background: rgba(255,255,255,0.3); margin: 0 2px; }
 .meta-pin { color: rgba(255,255,255,0.8); flex-shrink: 0; }
 .meta-location {
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: -0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 13px; font-weight: 600;
+  color: rgba(255,255,255,0.95); letter-spacing: -0.16px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* ─── 편집 아이콘 ───────────────────────── */
 .btn-edit {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: none;
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 50%; border: none;
   background: rgba(0,0,0,0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   color: rgba(255,255,255,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .btn-edit:active { background: rgba(0,0,0,0.6); }
 
 /* ─── 기록 바디 ─────────────────────────── */
 .card-body {
-  padding: 16px 16px 16px;
-  background: var(--nm-bg);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  padding: 16px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 10px;
 }
 .ai-record {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text);
-  line-height: 1.65;
-  letter-spacing: -0.2px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 14px; font-weight: 400; color: var(--text);
+  line-height: 1.60; letter-spacing: -0.16px;
+  display: -webkit-box; -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical; overflow: hidden;
 }
 .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: -0.1px;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 500; letter-spacing: -0.1px;
+  border: 1px solid var(--border); background: var(--bg);
 }
-.tag-emotion {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  color: var(--text);
-}
+.tag-emotion { color: var(--text-mid); }
 .tag-category {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
   color: var(--accent);
+  border-color: rgba(20,110,245,0.25);
+  background: var(--accent-light);
 }
 </style>

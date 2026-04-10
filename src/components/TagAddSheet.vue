@@ -141,16 +141,17 @@ export default {
 /* ─── 오버레이 ──────────────────────────── */
 .sheet-overlay {
   position: fixed; inset: 0; z-index: 700;
-  background: rgba(232,236,240,0.6);
+  background: rgba(0,0,0,0.3);
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   display: flex; flex-direction: column; justify-content: flex-end;
 }
 
 /* ─── 시트 ──────────────────────────────── */
 .sheet {
-  background: var(--nm-bg);
-  box-shadow: -6px -6px 18px #ffffff, 6px -6px 18px #c3c9d4;
-  border-radius: 24px 24px 0 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
+  border-radius: 16px 16px 0 0;
   display: flex; flex-direction: column;
   max-height: 72vh;
   padding-bottom: env(safe-area-inset-bottom);
@@ -158,7 +159,7 @@ export default {
 
 .drag-handle {
   width: 36px; height: 4px; border-radius: 2px;
-  background: var(--nm-s1);
+  background: var(--border);
   margin: 12px auto 0; flex-shrink: 0;
 }
 
@@ -169,19 +170,17 @@ export default {
   padding: 12px 18px 8px; flex-shrink: 0;
 }
 .sheet-date {
-  font-size: 15px; font-weight: 700;
-  color: var(--text); letter-spacing: -0.3px;
+  font-size: 15px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.16px;
 }
 .btn-close {
   width: 32px; height: 32px;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border: none; border-radius: 50%;
-  color: var(--text-sub);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 50%; color: var(--text-sub);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0;
 }
-.btn-close:active { box-shadow: var(--nm-in-sm); }
+.btn-close:active { background: #f5f5f5; }
 
 /* ─── 탭 ────────────────────────────────── */
 .tabs {
@@ -189,20 +188,16 @@ export default {
   padding: 8px 18px 12px; flex-shrink: 0;
 }
 .tab-btn {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border: none; border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 13px; font-weight: 600;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 7px 16px; font-size: 13px; font-weight: 600; font-family: inherit;
   color: var(--text-sub);
-  cursor: pointer; font-family: inherit;
-  letter-spacing: -0.2px;
-  transition: box-shadow 0.2s, color 0.2s;
+  cursor: pointer; letter-spacing: -0.16px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 .tab-btn.active {
-  box-shadow: var(--nm-in-sm);
-  color: var(--accent);
+  background: var(--accent); border-color: var(--accent); color: #fff;
 }
 
 /* ─── 태그 그리드 ────────────────────────── */
@@ -212,16 +207,14 @@ export default {
   display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
 }
 .chip {
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  border: none; border-radius: 20px;
-  padding: 7px 14px;
-  font-size: 13px; font-weight: 600;
-  color: #00b894;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 7px 14px; font-size: 13px; font-weight: 600; font-family: inherit;
+  color: var(--accent);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   letter-spacing: -0.1px;
 }
-.chip:active { box-shadow: var(--nm-in-sm); }
+.chip:active { background: var(--accent-light); border-color: rgba(20,110,245,0.25); }
 .empty-msg {
   font-size: 13px; color: var(--text-sub);
   width: 100%; text-align: center; padding: 20px 0;
@@ -230,43 +223,37 @@ export default {
 /* ─── 입력 영역 ──────────────────────────── */
 .input-row {
   display: flex; align-items: center;
-  padding: 10px 14px;
-  background: var(--nm-bg);
-  box-shadow: 0 -3px 10px rgba(195,201,212,0.4);
+  padding: 10px 14px; background: var(--bg);
+  border-top: 1px solid var(--border);
   gap: 6px; flex-shrink: 0;
 }
 .hash-prefix {
-  font-size: 17px; font-weight: 700;
-  color: var(--text); flex-shrink: 0;
+  font-size: 17px; font-weight: 600;
+  color: var(--text-mid); flex-shrink: 0;
 }
 .tag-input {
   flex: 1; border: none; outline: none;
   font-size: 15px; font-weight: 400;
   color: var(--text); font-family: inherit;
-  background: transparent; letter-spacing: -0.2px;
+  background: transparent; letter-spacing: -0.16px;
 }
 .tag-input::placeholder { color: var(--text-sub); }
 .btn-send {
   width: 34px; height: 34px; border-radius: 50%;
-  border: none;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
+  border: 1px solid var(--border); background: var(--bg);
   color: var(--text-sub);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
 }
-.btn-send:active { box-shadow: var(--nm-in-sm); }
+.btn-send:active { background: #f5f5f5; }
 .btn-save {
-  border: none;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-out-sm);
-  color: var(--accent);
-  font-size: 14px; font-weight: 700;
-  padding: 8px 18px; border-radius: 20px;
+  background: var(--accent); border: 1px solid var(--accent);
+  color: #fff; font-size: 14px; font-weight: 600; font-family: inherit;
+  padding: 8px 18px; border-radius: var(--radius-pill);
   cursor: pointer; flex-shrink: 0;
-  letter-spacing: -0.2px; -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.16px; -webkit-tap-highlight-color: transparent;
 }
-.btn-save:active { box-shadow: var(--nm-in-sm); }
+.btn-save:active { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 /* ─── 애니메이션 ─────────────────────────── */
 .sheet-up-enter-active { transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1); }

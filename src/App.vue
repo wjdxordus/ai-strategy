@@ -126,27 +126,55 @@ export default {
 </script>
 
 <style>
-/* ─── 뉴모피즘 디자인 토큰 ──────────────────────── */
+/* ─── Webflow-Inspired Design System ──────────────── */
 :root {
-  --nm-bg:      #e8ecf0;
-  --nm-s1:      #c3c9d4;   /* 다크 쉐도우 */
-  --nm-s2:      #ffffff;   /* 라이트 쉐도우 */
-  --nm-out:     5px 5px 12px #c3c9d4, -5px -5px 12px #ffffff;
-  --nm-out-sm:  3px 3px 7px #c3c9d4, -3px -3px 7px #ffffff;
-  --nm-in:      inset 4px 4px 9px #c3c9d4, inset -4px -4px 9px #ffffff;
-  --nm-in-sm:   inset 2px 2px 5px #c3c9d4, inset -2px -2px 5px #ffffff;
-  --text:       #2f3b48;
-  --text-sub:   #7a8899;
-  --accent:     #6678e0;
-  --radius:     20px;
+  /* Base */
+  --bg:           #ffffff;
+  --text:         #080808;
+  --text-sub:     #ababab;
+  --text-mid:     #363636;
+
+  /* Brand */
+  --accent:       #146ef5;
+  --accent-hover: #0055d4;
+  --accent-light: rgba(20,110,245,0.08);
+
+  /* Secondary */
+  --purple:       #7a3dff;
+  --pink:         #ed52cb;
+  --green:        #00d722;
+
+  /* Structure */
+  --border:       #d8d8d8;
+  --border-hover: #898989;
+
+  /* 5-layer cascade shadow */
+  --shadow:
+    rgba(0,0,0,0)    0px 84px 24px,
+    rgba(0,0,0,0.01) 0px 54px 22px,
+    rgba(0,0,0,0.04) 0px 30px 18px,
+    rgba(0,0,0,0.08) 0px 13px 13px,
+    rgba(0,0,0,0.09) 0px 3px 7px;
+  --shadow-sm:
+    rgba(0,0,0,0)    0px 12px 6px,
+    rgba(0,0,0,0.01) 0px 8px 5px,
+    rgba(0,0,0,0.03) 0px 5px 4px,
+    rgba(0,0,0,0.05) 0px 2px 3px,
+    rgba(0,0,0,0.06) 0px 1px 2px;
+
+  /* Radius — conservative */
+  --radius:       8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-pill:  100px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
-  background: var(--nm-bg);
-  font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  font-family: 'WF Visual Sans Variable', Arial, -apple-system, 'Helvetica Neue', sans-serif;
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
@@ -158,7 +186,7 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--nm-bg);
+  background: var(--bg);
 }
 
 .page-view {
@@ -166,108 +194,80 @@ html, body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(49px + env(safe-area-inset-bottom));
-  background: var(--nm-bg);
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar { display: none; }
 
 /* ─── 스플래시 ──────────────────────────────── */
 .splash-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column;
   justify-content: space-between;
 }
 .splash-scrim {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background:
     linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 40%),
     linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 45%, transparent 70%);
 }
 .splash-top {
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
   padding: 60px 28px 0;
   padding-top: calc(60px + env(safe-area-inset-top));
 }
 .splash-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -1px;
-  line-height: 1.15;
-  margin-bottom: 8px;
+  font-size: 32px; font-weight: 600;
+  color: #fff; letter-spacing: -0.8px;
+  line-height: 1.04; margin-bottom: 8px;
 }
 .splash-sub {
-  font-size: 15px;
-  font-weight: 400;
-  color: rgba(255,255,255,0.65);
-  letter-spacing: -0.2px;
+  font-size: 16px; font-weight: 500;
+  color: rgba(255,255,255,0.65); letter-spacing: -0.16px;
 }
 .splash-bottom {
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
   padding: 0 28px 48px;
   padding-bottom: calc(48px + env(safe-area-inset-bottom));
 }
 .splash-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 20px;
+  display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px;
 }
 .splash-tag {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12px; font-weight: 500;
   color: rgba(255,255,255,0.9);
   background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 5px 13px;
-  border-radius: 20px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 5px 13px; border-radius: var(--radius-pill);
 }
 .splash-byline {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 12px; font-weight: 500;
   color: rgba(255,255,255,0.4);
-  letter-spacing: 0.3px;
+  letter-spacing: 1px; text-transform: uppercase;
 }
 .splash-fade-leave-active { transition: opacity 0.7s ease; }
 .splash-fade-leave-to { opacity: 0; }
 
 /* ─── AI 처리 바 ─────────────────────────────── */
 .processing-bar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 1000;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   padding: 12px 20px;
   padding-top: calc(12px + env(safe-area-inset-top));
-  background: var(--nm-bg);
-  box-shadow: 0 4px 16px rgba(195,201,212,0.7);
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 7px;
 }
 .processing-track {
-  height: 3px;
-  background: var(--nm-bg);
-  box-shadow: var(--nm-in-sm);
-  border-radius: 2px;
-  overflow: hidden;
+  height: 3px; background: #f0f0f0;
+  border-radius: 2px; overflow: hidden;
 }
 .processing-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width 0.4s ease;
+  height: 100%; background: var(--accent);
+  border-radius: 2px; transition: width 0.4s ease;
 }
 .processing-label {
-  font-size: 11px;
-  color: var(--text-sub);
-  letter-spacing: 0.1px;
+  font-size: 10px; font-weight: 500;
+  color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
