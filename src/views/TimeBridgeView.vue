@@ -278,6 +278,11 @@ export default {
         this.$nextTick(() => this.initMomentTrack())
       } else {
         this.removeScrollSync()
+        if (this.naverMap && window.naver) {
+          window.naver.maps.Event.clearListeners(this.naverMap)
+        }
+        this.naverMap = null
+        this.naverMarkers = {}
       }
     },
   },
@@ -419,7 +424,7 @@ export default {
         this.mapLoading = true
         const script = document.createElement('script')
         script.id = 'naver-maps-sdk'
-        script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=mxxnjmmj8h'
+        script.src = 'https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=mxxnjmmj8h'
         script.onload = () => { this.mapLoading = false; this.$nextTick(() => this.initNaverMap()) }
         script.onerror = () => { this.mapLoading = false }
         document.head.appendChild(script)
@@ -571,9 +576,9 @@ export default {
   flex-shrink: 0;
 }
 
-.tb-title-row { padding: 48px 20px 0; }
+.tb-title-row { padding: 20px 20px 0; }
 .tb-title {
-  font-size: 32px; font-weight: 600;
+  font-size: 24px; font-weight: 600;
   color: var(--text); letter-spacing: -0.8px; line-height: 1.04;
 }
 

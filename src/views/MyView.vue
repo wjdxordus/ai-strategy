@@ -349,8 +349,8 @@ export default {
   background: var(--bg); border-bottom: 1px solid var(--border);
 }
 .my-title {
-  font-size: 32px; font-weight: 600;
-  color: var(--text); letter-spacing: -0.8px; padding: 48px 20px 0;
+  font-size: 24px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.8px; padding: 20px 20px 0;
 }
 
 /* ─── 탭 ────────────────────────────────────── */
