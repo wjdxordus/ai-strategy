@@ -147,9 +147,12 @@ export async function processPhotoGroups(photoGroups, userInfo, date) {
   store.processingStatus = 'loading_weather'
   store.processingProgress = 0
 
-  // 1단계: 날씨 병렬 조회
+  // 1단계: 날씨 병렬 조회 (사진 촬영 시각 기준)
   const weatherResults = await Promise.allSettled(
-    photoGroups.map(g => fetchWeather(g.centerLat, g.centerLng))
+    photoGroups.map(g => {
+      const timestamp = g.startTime || g.photos?.[0]?.timestamp || Date.now()
+      return fetchWeather(g.centerLat, g.centerLng, timestamp)
+    })
   )
 
   store.processingStatus = 'loading_ai'
@@ -199,13 +202,43 @@ export async function processPhotoGroups(photoGroups, userInfo, date) {
   store.processingStatus = 'done'
 
   // 저장 (내년 메모리 기록으로 활용)
+  // thumbnail은 base64로 용량이 크므로 localStorage에는 저장하지 않음
   try {
-    localStorage.setItem(`records_${date}`, JSON.stringify(records))
+    localStorage.setItem(`records_${date}`, JSON.stringify(records.map(stripThumbnail)))
     // 전체 기록에도 추가
     const existing = store.records.filter(r => r.date !== date)
     store.records = [...records, ...existing].sort((a, b) => (a.date < b.date ? 1 : -1))
   } catch (e) {
     console.warn('기록 저장 실패:', e)
+  }
+}
+
+/** thumbnail(base64)을 제거한 저장용 레코드 반환 */
+function stripThumbnail(record) {
+  const { thumbnail, ...rest } = record
+  return rest
+}
+
+/**
+ * 기록 카드 수정 — store 전체(today/memory/records) 및 localStorage 반영
+ * patch: 수정할 필드 객체 (aiRecord, thumbnail, weather, location, emotionTags, categoryTags 등)
+ */
+export function updateRecord(id, patch) {
+  const applyPatch = r => r.id === id ? { ...r, ...patch } : r
+
+  store.todayRecords = store.todayRecords.map(applyPatch)
+  store.memoryRecords = store.memoryRecords.map(applyPatch)
+  store.records = store.records.map(applyPatch)
+
+  // localStorage 업데이트 (thumbnail 제외)
+  try {
+    const updated = store.records.find(r => r.id === id) ||
+                    store.todayRecords.find(r => r.id === id)
+    if (!updated) return
+    const dayRecords = store.records.filter(r => r.date === updated.date)
+    localStorage.setItem(`records_${updated.date}`, JSON.stringify(dayRecords.map(stripThumbnail)))
+  } catch (e) {
+    console.warn('기록 업데이트 저장 실패:', e)
   }
 }
 

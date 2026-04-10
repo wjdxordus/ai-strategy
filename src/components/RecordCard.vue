@@ -1,39 +1,51 @@
 <template>
-  <div class="record-card">
+  <!-- outer: 뉴모피즘 shadow (overflow: hidden 없음) -->
+  <div class="record-card-outer">
+    <!-- inner: 이미지 클리핑 -->
+    <div class="record-card">
 
-    <!-- 사진 영역 -->
-    <div class="card-photo" :style="photoStyle">
-      <div class="photo-scrim" />
-      <div class="photo-meta">
-        <span class="meta-weather">{{ record.weather.emoji }}</span>
-        <span class="meta-time">{{ record.time }}</span>
-        <span class="meta-sep" />
-        <svg class="meta-pin" width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-        <span class="meta-location">{{ record.location }}</span>
+      <!-- 사진 영역 -->
+      <div class="card-photo" :style="photoStyle">
+        <div class="photo-scrim" />
+        <!-- 편집 아이콘 (우측 상단) -->
+        <button class="btn-edit" @click.stop="$emit('edit', record)" aria-label="편집">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+        <div class="photo-meta">
+          <span class="meta-weather">{{ record.weather.emoji }}</span>
+          <span class="meta-time">{{ record.time }}</span>
+          <span class="meta-sep" />
+          <svg class="meta-pin" width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <span class="meta-location">{{ record.location }}</span>
+        </div>
       </div>
+
+      <!-- 기록 텍스트 -->
+      <div class="card-body">
+        <p class="ai-record">{{ record.aiRecord }}</p>
+
+        <!-- 감정 태그 -->
+        <div v-if="record.emotionTags && record.emotionTags.length" class="tag-row">
+          <span v-for="tag in record.emotionTags" :key="tag.label" class="tag tag-emotion">
+            {{ tag.icon }}&thinsp;{{ tag.label }}
+          </span>
+        </div>
+
+        <!-- 카테고리 태그 -->
+        <div v-if="record.categoryTags && record.categoryTags.length" class="tag-row">
+          <span v-for="tag in record.categoryTags" :key="tag" class="tag tag-category">
+            #&thinsp;{{ tag }}
+          </span>
+        </div>
+      </div>
+
     </div>
-
-    <!-- 기록 텍스트 -->
-    <div class="card-body">
-      <p class="ai-record">{{ record.aiRecord }}</p>
-
-      <!-- 감정 태그 -->
-      <div v-if="record.emotionTags && record.emotionTags.length" class="tag-row">
-        <span v-for="tag in record.emotionTags" :key="tag.label" class="tag tag-emotion">
-          {{ tag.icon }}&thinsp;{{ tag.label }}
-        </span>
-      </div>
-
-      <!-- 카테고리 태그 -->
-      <div v-if="record.categoryTags && record.categoryTags.length" class="tag-row">
-        <span v-for="tag in record.categoryTags" :key="tag" class="tag tag-category">
-          #&thinsp;{{ tag }}
-        </span>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -43,6 +55,7 @@ export default {
   props: {
     record: { type: Object, required: true },
   },
+  emits: ['edit'],
   computed: {
     photoStyle() {
       if (this.record.thumbnail) {
@@ -59,15 +72,22 @@ export default {
 </script>
 
 <style scoped>
-.record-card {
-  background: #fff;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+/* ─── 외부 래퍼 (뉴모피즘 shadow) ─────────── */
+.record-card-outer {
+  border-radius: 22px;
+  box-shadow: var(--nm-out);
   flex-shrink: 0;
+  background: var(--nm-bg);
 }
 
-/* 사진 */
+/* ─── 내부 카드 (이미지 클리핑) ────────────── */
+.record-card {
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--nm-bg);
+}
+
+/* ─── 사진 ──────────────────────────────── */
 .card-photo {
   position: relative;
   width: 100%;
@@ -79,8 +99,8 @@ export default {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to bottom, rgba(0,0,0,0.12) 0%, transparent 30%),
-    linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.2) 40%, transparent 65%);
+    linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 25%),
+    linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 40%, transparent 65%);
 }
 .photo-meta {
   position: absolute;
@@ -93,26 +113,10 @@ export default {
   gap: 5px;
   overflow: hidden;
 }
-.meta-weather {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.meta-time {
-  font-size: 11px;
-  color: rgba(255,255,255,0.7);
-  flex-shrink: 0;
-}
-.meta-sep {
-  flex-shrink: 0;
-  width: 1px;
-  height: 10px;
-  background: rgba(255,255,255,0.3);
-  margin: 0 2px;
-}
-.meta-pin {
-  color: rgba(255,255,255,0.8);
-  flex-shrink: 0;
-}
+.meta-weather { font-size: 14px; flex-shrink: 0; }
+.meta-time { font-size: 11px; color: rgba(255,255,255,0.72); flex-shrink: 0; }
+.meta-sep { flex-shrink: 0; width: 1px; height: 10px; background: rgba(255,255,255,0.3); margin: 0 2px; }
+.meta-pin { color: rgba(255,255,255,0.8); flex-shrink: 0; }
 .meta-location {
   font-size: 13px;
   font-weight: 600;
@@ -123,9 +127,32 @@ export default {
   text-overflow: ellipsis;
 }
 
-/* 기록 바디 */
+/* ─── 편집 아이콘 ───────────────────────── */
+.btn-edit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-edit:active { background: rgba(0,0,0,0.6); }
+
+/* ─── 기록 바디 ─────────────────────────── */
 .card-body {
-  padding: 16px 16px 14px;
+  padding: 16px 16px 16px;
+  background: var(--nm-bg);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -133,19 +160,15 @@ export default {
 .ai-record {
   font-size: 14px;
   font-weight: 400;
-  color: #1d1d1f;
-  line-height: 1.6;
+  color: var(--text);
+  line-height: 1.65;
   letter-spacing: -0.2px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag {
   padding: 4px 10px;
   border-radius: 20px;
@@ -154,11 +177,13 @@ export default {
   letter-spacing: -0.1px;
 }
 .tag-emotion {
-  background: #f0f0f5;
-  color: #1d1d1f;
+  background: var(--nm-bg);
+  box-shadow: var(--nm-out-sm);
+  color: var(--text);
 }
 .tag-category {
-  background: #e8f4fd;
-  color: #0066cc;
+  background: var(--nm-bg);
+  box-shadow: var(--nm-out-sm);
+  color: var(--accent);
 }
 </style>

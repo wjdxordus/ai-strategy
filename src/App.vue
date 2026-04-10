@@ -126,13 +126,28 @@ export default {
 </script>
 
 <style>
+/* ─── 뉴모피즘 디자인 토큰 ──────────────────────── */
+:root {
+  --nm-bg:      #e8ecf0;
+  --nm-s1:      #c3c9d4;   /* 다크 쉐도우 */
+  --nm-s2:      #ffffff;   /* 라이트 쉐도우 */
+  --nm-out:     5px 5px 12px #c3c9d4, -5px -5px 12px #ffffff;
+  --nm-out-sm:  3px 3px 7px #c3c9d4, -3px -3px 7px #ffffff;
+  --nm-in:      inset 4px 4px 9px #c3c9d4, inset -4px -4px 9px #ffffff;
+  --nm-in-sm:   inset 2px 2px 5px #c3c9d4, inset -2px -2px 5px #ffffff;
+  --text:       #2f3b48;
+  --text-sub:   #7a8899;
+  --accent:     #6678e0;
+  --radius:     20px;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
-  background: #fff;
+  background: var(--nm-bg);
   font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
-  color: #1d1d1f;
+  color: var(--text);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -143,6 +158,7 @@ html, body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--nm-bg);
 }
 
 .page-view {
@@ -150,6 +166,7 @@ html, body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(49px + env(safe-area-inset-bottom));
+  background: var(--nm-bg);
 }
 
 ::-webkit-scrollbar { display: none; }
@@ -206,12 +223,11 @@ html, body {
   font-size: 12px;
   font-weight: 500;
   color: rgba(255,255,255,0.9);
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.2);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 5px 13px;
   border-radius: 20px;
-  letter-spacing: 0;
 }
 .splash-byline {
   font-size: 12px;
@@ -219,42 +235,39 @@ html, body {
   color: rgba(255,255,255,0.4);
   letter-spacing: 0.3px;
 }
-
 .splash-fade-leave-active { transition: opacity 0.7s ease; }
 .splash-fade-leave-to { opacity: 0; }
 
-/* ─── 처리 바 ───────────────────────────────── */
+/* ─── AI 처리 바 ─────────────────────────────── */
 .processing-bar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 1000;
-  padding: 10px 20px;
-  padding-top: calc(10px + env(safe-area-inset-top));
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  padding: 12px 20px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  background: var(--nm-bg);
+  box-shadow: 0 4px 16px rgba(195,201,212,0.7);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 .processing-track {
-  height: 2px;
-  background: #e5e5ea;
-  border-radius: 1px;
+  height: 3px;
+  background: var(--nm-bg);
+  box-shadow: var(--nm-in-sm);
+  border-radius: 2px;
   overflow: hidden;
 }
 .processing-fill {
   height: 100%;
-  background: #1d1d1f;
-  border-radius: 1px;
+  background: var(--accent);
+  border-radius: 2px;
   transition: width 0.4s ease;
 }
 .processing-label {
   font-size: 11px;
-  color: #6e6e73;
-  letter-spacing: 0.2px;
+  color: var(--text-sub);
+  letter-spacing: 0.1px;
 }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
