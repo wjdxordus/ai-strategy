@@ -126,6 +126,15 @@ export default {
 </script>
 
 <style>
+/* ─── Pretendard Variable 폰트 ──────────────────── */
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-weight: 45 920;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/PretendardVariable.woff2') format('woff2-variations');
+}
+
 /* ─── Webflow-Inspired Design System ──────────────── */
 :root {
   /* Base */
@@ -174,7 +183,7 @@ export default {
 html, body {
   height: 100%;
   background: var(--bg);
-  font-family: 'WF Visual Sans Variable', Arial, -apple-system, 'Helvetica Neue', sans-serif;
+  font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
