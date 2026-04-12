@@ -75,17 +75,17 @@ export default {
 /* ─── 외부 래퍼 ─────────────────────────── */
 .record-card-outer {
   border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
+  border: none;
   box-shadow: var(--shadow);
   flex-shrink: 0;
-  background: var(--bg);
+  background: rgb(38, 37, 43);
 }
 
 /* ─── 내부 카드 (이미지 클리핑) ────────────── */
 .record-card {
   border-radius: var(--radius-xl);
   overflow: hidden;
-  background: var(--bg);
+  background: transparent;
 }
 
 /* ─── 사진 ──────────────────────────────── */
@@ -101,7 +101,7 @@ export default {
     linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 40%, transparent 65%);
 }
 .photo-meta {
-  position: absolute; bottom: 14px; left: 14px; right: 14px;
+  position: absolute; bottom: 34px; left: 14px; right: 14px;
   z-index: 1; display: flex; align-items: center; gap: 5px; overflow: hidden;
 }
 .meta-weather { font-size: 14px; flex-shrink: 0; }
@@ -128,11 +128,21 @@ export default {
 
 /* ─── 기록 바디 ─────────────────────────── */
 .card-body {
-  padding: 16px; background: var(--bg);
+  position: relative; z-index: 1;
+  margin-top: -20px;
+  padding: 16px;
+  background: linear-gradient(
+    to bottom,
+    rgba(58,55,44,0)    0px,
+    rgba(58,55,44,0.85) 20px,
+    rgb(58,55,44)       40px,
+    rgb(38,37,43)       100%
+  );
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   display: flex; flex-direction: column; gap: 10px;
 }
 .ai-record {
-  font-size: 14px; font-weight: 400; color: var(--text);
+  font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.92);
   line-height: 1.60; letter-spacing: -0.16px;
   display: -webkit-box; -webkit-line-clamp: 3;
   -webkit-box-orient: vertical; overflow: hidden;
@@ -141,12 +151,16 @@ export default {
 .tag {
   padding: 4px 10px; border-radius: var(--radius-pill);
   font-size: 11px; font-weight: 500; letter-spacing: -0.1px;
-  border: 1px solid var(--border); background: var(--bg);
+  border: none;
 }
-.tag-emotion { color: var(--text-mid); }
+.tag-emotion {
+  color: rgba(255,255,255,0.9);
+  background: linear-gradient(135deg, rgba(70,79,88,0.85), rgba(70,79,88,0.55));
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
 .tag-category {
-  color: var(--accent);
-  border-color: rgba(20,110,245,0.25);
-  background: var(--accent-light);
+  color: rgba(255,255,255,0.5);
+  background: transparent;
 }
 </style>

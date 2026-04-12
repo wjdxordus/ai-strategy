@@ -7,8 +7,22 @@
         <div class="section-title-row">
           <h2 class="section-title">오늘의 기록</h2>
           <span class="section-date">{{ todayLabel }}</span>
+          <div class="header-icons">
+            <button class="header-icon-btn" aria-label="알림">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+              </svg>
+            </button>
+            <button class="header-icon-btn" aria-label="검색" @click="$router.push({ path: '/my', query: { tab: 'tag_album' } })">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <p class="section-desc">골든레코드AI가 셀렉트한 베스트포토와 자동 기록입니다.</p>
+        <p class="section-desc">
+          <img src="/images/logo.png" class="section-desc-logo" alt="골든레코드" />가 큐레이션한 소중한 기록
+        </p>
       </div>
 
       <div class="carousel" ref="todayStrip" @scroll.passive="onTodayScroll">
@@ -128,8 +142,16 @@ export default {
 
 .section-header { padding: 0 24px; margin-bottom: 20px; }
 .section-title-row {
-  display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 5px;
 }
+.header-icons { margin-left: auto; display: flex; gap: 4px; }
+.header-icon-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--text-mid); border-radius: var(--radius);
+}
+.header-icon-btn:active { background: var(--accent-light); color: var(--accent); }
 .section-title {
   font-size: 24px; font-weight: 600; color: var(--text);
   letter-spacing: -0.8px; line-height: 1.04;
@@ -141,6 +163,12 @@ export default {
 .section-desc {
   font-size: 14px; font-weight: 400; color: var(--text-sub);
   letter-spacing: -0.16px; line-height: 1.50;
+  display: flex; align-items: center; gap: 4px;
+}
+.section-desc-logo {
+  height: 18px; width: auto;
+  display: inline-block; vertical-align: middle;
+  object-fit: contain;
 }
 
 /* ─── CAROUSEL ────────────────────────────── */

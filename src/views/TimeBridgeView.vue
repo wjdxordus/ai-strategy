@@ -6,6 +6,18 @@
       <!-- 타이틀 -->
       <div class="tb-title-row">
         <h1 class="tb-title">타임브릿지</h1>
+        <div class="tb-header-icons">
+          <button class="tb-icon-btn" aria-label="알림">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+          </button>
+          <button class="tb-icon-btn" aria-label="검색" @click="$router.push({ path: '/my', query: { tab: 'tag_album' } })">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <!-- 메인 탭 -->
@@ -576,11 +588,22 @@ export default {
   flex-shrink: 0;
 }
 
-.tb-title-row { padding: 20px 20px 0; }
+.tb-title-row {
+  padding: 20px 20px 0;
+  display: flex; align-items: center;
+}
 .tb-title {
   font-size: 24px; font-weight: 600;
   color: var(--text); letter-spacing: -0.8px; line-height: 1.04;
 }
+.tb-header-icons { margin-left: auto; display: flex; gap: 4px; }
+.tb-icon-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--text-mid); border-radius: var(--radius);
+}
+.tb-icon-btn:active { background: var(--accent-light); color: var(--accent); }
 
 /* ─── 메인 탭 ───────────────────────────────── */
 .tb-main-tabs {
@@ -589,14 +612,20 @@ export default {
   margin-top: 14px;
 }
 .tb-main-tab {
+  position: relative;
   flex: 1; padding: 10px 0 12px;
   border: none; background: none; font-family: inherit;
   font-size: 14px; font-weight: 600; color: var(--text-sub);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s; letter-spacing: -0.16px;
+  transition: color 0.2s; letter-spacing: -0.16px;
 }
-.tb-main-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.tb-main-tab.active { color: var(--text); border-bottom-color: transparent; }
+.tb-main-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
+  border-radius: 1px;
+}
 .tb-main-tab-sep {
   width: 1px; background: var(--border);
   margin: 8px 0 4px; flex-shrink: 0;

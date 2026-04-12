@@ -300,6 +300,11 @@ export default {
       })
     },
   },
+  mounted() {
+    if (this.$route.query.tab) {
+      this.activeTab = this.$route.query.tab
+    }
+  },
   methods: {
     switchTab(tab) {
       this.activeTab = tab
@@ -359,14 +364,20 @@ export default {
   border-bottom: 1px solid var(--border); margin-top: 14px;
 }
 .my-tab {
+  position: relative;
   flex: 1; padding: 10px 0 12px;
   border: none; background: none; font-family: inherit;
   font-size: 14px; font-weight: 600; color: var(--text-sub);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s; letter-spacing: -0.16px;
+  transition: color 0.2s; letter-spacing: -0.16px;
 }
-.my-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+.my-tab.active { color: var(--text); border-bottom-color: transparent; }
+.my-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
+  border-radius: 1px;
+}
 .my-tab-sep {
   width: 1px; background: var(--border);
   margin: 8px 0 4px; flex-shrink: 0;

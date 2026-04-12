@@ -5,6 +5,18 @@
     <div class="cinema-header">
       <div class="cinema-title-row">
         <h2 class="cinema-title">시네마</h2>
+        <div class="cinema-header-icons">
+          <button class="cinema-icon-btn" aria-label="알림">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+          </button>
+          <button class="cinema-icon-btn" aria-label="검색" @click="$router.push({ path: '/my', query: { tab: 'tag_album' } })">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="cinema-tab-bar">
         <div class="cinema-tab" :class="{ active: tab === 'story' }" @click="tab = 'story'">스토리</div>
@@ -324,17 +336,29 @@ export default {
   position: sticky; top: 0; z-index: 20;
   background: var(--bg); border-bottom: 1px solid var(--border);
 }
-.cinema-title-row { padding: 20px 20px 0; }
+.cinema-title-row {
+  padding: 20px 20px 0;
+  display: flex; align-items: center;
+}
 .cinema-title {
   font-size: 24px; font-weight: 600;
   color: var(--text); letter-spacing: -0.8px; line-height: 1.04;
 }
+.cinema-header-icons { margin-left: auto; display: flex; gap: 4px; }
+.cinema-icon-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--text-mid); border-radius: var(--radius);
+}
+.cinema-icon-btn:active { background: var(--accent-light); color: var(--accent); }
 .cinema-tab-bar {
   display: flex; align-items: stretch;
   margin-top: 14px;
 }
 .cinema-tab-sep { width: 1px; background: var(--border); align-self: stretch; margin: 6px 0; }
 .cinema-tab {
+  position: relative;
   flex: 1; text-align: center;
   padding: 10px 0 12px;
   font-size: 14px; font-weight: 500; color: var(--text-sub);
@@ -342,7 +366,11 @@ export default {
 }
 .cinema-tab.active {
   color: var(--accent); font-weight: 600;
-  border-bottom: 2px solid var(--accent);
+}
+.cinema-tab.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
+  border-radius: 1px;
 }
 
 /* ── Story ────────────────────────────────── */
