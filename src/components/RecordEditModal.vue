@@ -185,20 +185,32 @@ export default {
       this.analyzing = true
       try {
         const { thumbnail, lat, lng, timestamp, locationLabel } = picked
-        const location = locationLabel || this.draft.location
+
+        // 위치: picked에서 받은 값 → draft 값 → 좌표 문자열 순으로 fallback
+        const resolvedLat = lat || this.draft.lat
+        const resolvedLng = lng || this.draft.lng
+        let location = locationLabel || this.draft.location
+        if (!location && resolvedLat && resolvedLng) {
+          location = `${resolvedLat.toFixed(4)}, ${resolvedLng.toFixed(4)}`
+        }
+        console.log('[EditModal] 위치 정보:', location, '| lat:', resolvedLat, 'lng:', resolvedLng)
+
         const d = new Date(timestamp || Date.now())
         const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 
         // 1단계: 날씨 조회
         this.analyzingStep = '날씨 정보 조회 중...'
-        const weather = await fetchWeather(lat || this.draft.lat, lng || this.draft.lng, timestamp)
+        const weather = await fetchWeather(resolvedLat, resolvedLng, timestamp)
+        console.log('[EditModal] 날씨 정보:', weather)
 
         // 2단계: 사진 업로드
         this.analyzingStep = '사진 업로드 중...'
         const uploadFileId = await uploadFile(thumbnail)
+        console.log('[EditModal] 업로드 완료 id:', uploadFileId)
 
         // 3단계: AI 분석
         this.analyzingStep = 'AI가 기록을 만들고 있어요...'
+        console.log('[EditModal] 분석 요청 → location:', location, 'weather:', weather)
         const generated = await analyzePhoto(uploadFileId, location, weather)
 
         this.draft = {
