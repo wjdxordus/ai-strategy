@@ -211,7 +211,7 @@ export default {
   display: flex; align-items: center; gap: 4px;
 }
 .section-desc-logo {
-  height: 18px; width: auto;
+  height: 30px; width: auto;
   display: inline-block; vertical-align: middle;
   object-fit: contain;
 }
