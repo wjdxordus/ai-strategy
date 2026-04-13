@@ -98,7 +98,6 @@
               today: cell && cell.dateStr === todayStr,
               'is-sun': ci % 7 === 0,
               'is-sat': ci % 7 === 6,
-              'in-journey': cell && !!journeyDateMap[cell.dateStr],
             }"
             @click="cell && recordMap[cell.dateStr] && selectDate(cell.dateStr)"
           >
@@ -110,21 +109,6 @@
               />
               <div v-if="recordMap[cell.dateStr]" class="cal-overlay" />
               <span class="cal-day-num">{{ cell.day }}</span>
-              <span v-if="journeyDateMap[cell.dateStr] && recordMap[cell.dateStr]" class="cal-journey-icon">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <defs>
-                    <linearGradient id="cal-journey-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#146ef5"/>
-                      <stop offset="100%" stop-color="#8B5CF6"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M9 3h6v3H9z" stroke="url(#cal-journey-grad)"/>
-                  <rect x="3" y="6" width="18" height="13" rx="2" stroke="url(#cal-journey-grad)"/>
-                  <line x1="3" y1="11" x2="21" y2="11" stroke="url(#cal-journey-grad)" stroke-width="1.5"/>
-                  <circle cx="8" cy="21" r="1.2" stroke="url(#cal-journey-grad)" stroke-width="1.5"/>
-                  <circle cx="16" cy="21" r="1.2" stroke="url(#cal-journey-grad)" stroke-width="1.5"/>
-                </svg>
-              </span>
             </template>
           </div>
         </div>
@@ -151,91 +135,29 @@
 
       <div v-for="mg in listMonths" :key="mg.key" class="list-month-block">
         <div class="list-month-label">{{ mg.label }}</div>
-        <template v-for="dg in mg.dateGroups">
-          <!-- 여정 카드 (여정 첫날에만 한 번 렌더링, 전체 기록 포함) -->
-          <div
-            v-if="journeyDateMap[dg.dateStr] && journeyDateMap[dg.dateStr].startDate === dg.dateStr"
-            :key="'j-' + dg.dateStr"
-            class="journey-card"
-          >
-            <div class="journey-card-head">
-              <div class="journey-card-icon-wrap">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <defs>
-                    <linearGradient id="journey-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stop-color="#146ef5"/>
-                      <stop offset="100%" stop-color="#8B5CF6"/>
-                    </linearGradient>
-                  </defs>
-                  <path d="M9 3h6v3H9z" stroke="url(#journey-grad)"/>
-                  <rect x="3" y="6" width="18" height="13" rx="2" stroke="url(#journey-grad)"/>
-                  <line x1="3" y1="11" x2="21" y2="11" stroke="url(#journey-grad)" stroke-width="1.5"/>
-                  <line x1="3" y1="15" x2="21" y2="15" stroke="url(#journey-grad)" stroke-width="1.5"/>
-                  <circle cx="8" cy="21" r="1.2" stroke="url(#journey-grad)" stroke-width="1.5"/>
-                  <circle cx="16" cy="21" r="1.2" stroke="url(#journey-grad)" stroke-width="1.5"/>
-                </svg>
-              </div>
-              <div class="journey-card-info">
-                <span class="journey-card-title">{{ journeyDateMap[dg.dateStr].label }} 여정</span>
-                <span class="journey-card-dates">{{ journeyDateLabel(journeyDateMap[dg.dateStr]) }}</span>
-              </div>
-            </div>
-            <div class="journey-card-body">
-              <div
-                v-for="jDateStr in journeyDateMap[dg.dateStr].dates"
-                :key="jDateStr"
-                class="journey-day-group"
-              >
-                <div class="journey-day-label">{{ formatJourneyDate(jDateStr) }}</div>
-                <div class="journey-day-records">
-                  <div
-                    v-for="r in journeyRecordsForDate(journeyDateMap[dg.dateStr], jDateStr)"
-                    :key="r.id"
-                    class="journey-record-row"
-                    @click="selectDate(jDateStr)"
-                  >
-                    <div class="journey-record-thumb" :style="thumbStyle(r)" />
-                    <div class="journey-record-info">
-                      <div class="journey-record-meta">
-                        <span>{{ r.time }}</span>
-                        <span>{{ displayLocation(r.location) }}</span>
-                      </div>
-                      <p class="journey-record-text">{{ r.aiRecord }}</p>
-                    </div>
-                  </div>
+        <div
+          v-for="dg in mg.dateGroups"
+          :key="dg.dateStr"
+          class="list-day-row"
+          @click="selectDate(dg.dateStr)"
+        >
+          <div class="list-day-left">
+            <span class="list-dow">{{ dg.dow }}</span>
+            <span class="list-day-num">{{ dg.day }}</span>
+          </div>
+          <div class="list-day-records">
+            <div v-for="r in dg.records" :key="r.id" class="list-record-item">
+              <div class="list-record-thumb" :style="thumbStyle(r)" />
+              <div class="list-record-info">
+                <div class="list-record-meta">
+                  <span class="list-record-time">{{ r.time }}</span>
+                  <span class="list-record-location">{{ displayLocation(r.location) }}</span>
                 </div>
+                <p class="list-record-text">{{ r.aiRecord }}</p>
               </div>
             </div>
           </div>
-          <!-- 일반 날짜 행 (여정 날짜는 비여정 기록만, 없으면 숨김) -->
-          <div
-            v-else-if="!journeyDateMap[dg.dateStr] || nonJourneyRecords(dg.dateStr, journeyDateMap[dg.dateStr]).length > 0"
-            :key="dg.dateStr"
-            class="list-day-row"
-            @click="selectDate(dg.dateStr)"
-          >
-            <div class="list-day-left">
-              <span class="list-dow">{{ dg.dow }}</span>
-              <span class="list-day-num">{{ dg.day }}</span>
-            </div>
-            <div class="list-day-records">
-              <div
-                v-for="r in (journeyDateMap[dg.dateStr] ? nonJourneyRecords(dg.dateStr, journeyDateMap[dg.dateStr]) : dg.records)"
-                :key="r.id"
-                class="list-record-item"
-              >
-                <div class="list-record-thumb" :style="thumbStyle(r)" />
-                <div class="list-record-info">
-                  <div class="list-record-meta">
-                    <span class="list-record-time">{{ r.time }}</span>
-                    <span class="list-record-location">{{ displayLocation(r.location) }}</span>
-                  </div>
-                  <p class="list-record-text">{{ r.aiRecord }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
       <div style="height: 80px" />
     </div>
@@ -481,52 +403,6 @@ export default {
     mapRecords() {
       return this.allRecords.filter(r => r.lat && r.lng)
     },
-
-    // ── 특별한 여정 감지 ─────────────────────────
-    journeys() {
-      const sorted = [...this.allDates].sort()
-      const dateAreas = sorted.map(dateStr => {
-        const recs = this.recordsByDate[dateStr] || []
-        const areas = recs.map(r => this.extractTripArea(r.location)).filter(Boolean)
-        if (!areas.length) return { dateStr, area: null }
-        const freq = {}
-        areas.forEach(a => { freq[a] = (freq[a] || 0) + 1 })
-        const topArea = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
-        const isTrip = areas.length > 0
-        return { dateStr, area: isTrip ? topArea : null }
-      })
-      const journeys = []
-      let current = null
-      for (const { dateStr, area } of dateAreas) {
-        if (area) {
-          if (current && current.area === area) {
-            current.dates.push(dateStr)
-            current.endDate = dateStr
-          } else {
-            if (current) journeys.push(current)
-            current = {
-              id: 'journey-' + dateStr,
-              area,
-              label: area.replace(/시$/, '').replace(/군$/, ''),
-              startDate: dateStr,
-              endDate: dateStr,
-              dates: [dateStr],
-            }
-          }
-        } else {
-          if (current) { journeys.push(current); current = null }
-        }
-      }
-      if (current) journeys.push(current)
-      return journeys
-    },
-    journeyDateMap() {
-      const map = {}
-      for (const j of this.journeys) {
-        for (const d of j.dates) map[d] = j
-      }
-      return map
-    },
   },
   beforeDestroy() {
     this.removeScrollSync()
@@ -551,43 +427,6 @@ export default {
       const idx = this.allDates.indexOf(this.selectedDate)
       if (idx > 0) this.selectedDate = this.allDates[idx - 1]
     },
-    // ── 여정 헬퍼 ────────────────────────────────
-    extractTripArea(location) {
-      if (!location) return null
-      const addr = location.includes(' · ') ? location.split(' · ')[1] : location
-      // 시/군 레벨 추출 (구 제외)
-      const m = addr.match(/^([가-힣]+(?:시|군))(?:\s|$)/)
-      if (!m) return null
-      const city = m[1]
-      if (city.endsWith('구')) return null
-      // homeAddress에 포함된 도시면 여정 아님
-      const home = store.userInfo && store.userInfo.homeAddress || ''
-      if (home && home.includes(city)) return null
-      return city
-    },
-    journeyDateLabel(journey) {
-      const fmt = d => {
-        const dt = new Date(d)
-        return `${dt.getMonth() + 1}월 ${dt.getDate()}일 (${DOW[dt.getDay()]})`
-      }
-      if (journey.startDate === journey.endDate) return fmt(journey.startDate)
-      return `${fmt(journey.startDate)} – ${fmt(journey.endDate)}`
-    },
-    journeyThumbnail(journey) {
-      const recs = this.recordsByDate[journey.startDate] || []
-      return recs[0] && recs[0].thumbnail || null
-    },
-    formatJourneyDate(dateStr) {
-      const d = new Date(dateStr)
-      return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`
-    },
-    journeyRecordsForDate(journey, dateStr) {
-      return (this.recordsByDate[dateStr] || []).filter(r => this.extractTripArea(r.location) === journey.area)
-    },
-    nonJourneyRecords(dateStr, journey) {
-      return (this.recordsByDate[dateStr] || []).filter(r => this.extractTripArea(r.location) !== journey.area)
-    },
-
     // "건물명 · 주소" 형태면 건물명만, 아니면 전체 반환
     displayLocation(location) {
       if (!location) return ''
@@ -960,73 +799,6 @@ export default {
   line-height: 1.5; letter-spacing: -0.16px;
   display: -webkit-box;
   -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-
-/* ─── 여정 카드 ──────────────────────────────── */
-.journey-card {
-  margin: 12px 20px 4px;
-  border: 1px solid rgba(139,92,246,0.25);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-.journey-card-head {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(20,110,245,0.07), rgba(139,92,246,0.1));
-  border-bottom: 1px solid rgba(139,92,246,0.15);
-}
-.journey-card-icon-wrap {
-  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(20,110,245,0.1), rgba(139,92,246,0.12));
-  border: 1px solid rgba(139,92,246,0.2);
-  display: flex; align-items: center; justify-content: center;
-}
-.journey-card-info { display: flex; flex-direction: column; gap: 3px; }
-.journey-card-title {
-  font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
-  background: linear-gradient(90deg, #146ef5, #8B5CF6);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.journey-card-dates { font-size: 11px; color: var(--text-sub); }
-.journey-card-body { background: var(--bg); padding: 8px 0 4px; }
-.journey-day-group { padding: 6px 16px 10px; }
-.journey-day-group + .journey-day-group {
-  border-top: 1px solid var(--border); padding-top: 10px;
-}
-.journey-day-label {
-  font-size: 11px; font-weight: 600; color: var(--text-sub);
-  letter-spacing: 0.3px; margin-bottom: 8px;
-}
-.journey-day-records { display: flex; flex-direction: column; gap: 8px; }
-.journey-record-row {
-  display: flex; gap: 10px; align-items: flex-start;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-}
-.journey-record-row:active { opacity: 0.7; }
-.journey-record-thumb {
-  width: 64px; height: 64px; border-radius: var(--radius);
-  flex-shrink: 0; background-size: cover; background-position: center;
-  border: 1px solid var(--border);
-}
-.journey-record-info { flex: 1; min-width: 0; }
-.journey-record-meta {
-  display: flex; gap: 6px; align-items: center;
-  font-size: 10px; color: var(--text-sub); margin-bottom: 4px;
-}
-.journey-record-text {
-  font-size: 12px; color: var(--text); line-height: 1.5; letter-spacing: -0.1px;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-}
-
-/* ─── 캘린더 여정 셀 ─────────────────────────── */
-.cal-cell.in-journey .cal-overlay {
-  background: linear-gradient(135deg, rgba(20,110,245,0.22), rgba(139,92,246,0.22));
-}
-.cal-journey-icon {
-  position: absolute; bottom: 3px; right: 3px;
-  font-size: 9px; line-height: 1; z-index: 2;
 }
 
 /* ─── 일별 상세 뷰 ───────────────────────────── */
