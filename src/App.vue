@@ -13,16 +13,24 @@
 
     <router-view class="page-view" />
     <GNB />
+
+    <!-- 공유 시트: page-view 바깥에서 렌더링 -->
+    <ShareSheet
+      v-if="store.sharingRecord"
+      :record="store.sharingRecord"
+      @close="store.sharingRecord = null"
+    />
   </div>
 </template>
 
 <script>
 import GNB from './components/GNB.vue'
+import ShareSheet from './components/ShareSheet.vue'
 import { store, processPhotoGroups, loadMemoryRecords } from './store'
 
 export default {
   name: 'App',
-  components: { GNB },
+  components: { GNB, ShareSheet },
   data() {
     return { store }
   },

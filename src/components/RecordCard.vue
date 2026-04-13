@@ -1,5 +1,4 @@
 <template>
-  <div class="record-card-root">
   <!-- outer: 뉴모피즘 shadow (overflow: hidden 없음) -->
   <div class="record-card-outer">
     <!-- inner: 이미지 클리핑 -->
@@ -10,7 +9,7 @@
         <div class="photo-scrim" />
         <!-- 우측 상단 버튼 그룹 -->
         <div class="photo-actions">
-          <button class="btn-photo-action" @click.stop="showShare = true" aria-label="공유하기">
+          <button class="btn-photo-action" @click.stop="store.sharingRecord = record" aria-label="공유하기">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -59,29 +58,19 @@
 
     </div>
   </div>
-
-  <!-- 공유 시트 -->
-  <ShareSheet
-    v-if="showShare"
-    :record="record"
-    @close="showShare = false"
-  />
-
-  </div>
 </template>
 
 <script>
-import ShareSheet from './ShareSheet.vue'
+import { store } from '../store'
 
 export default {
   name: 'RecordCard',
-  components: { ShareSheet },
   props: {
     record: { type: Object, required: true },
   },
   emits: ['edit'],
   data() {
-    return { showShare: false }
+    return { store }
   },
   computed: {
     photoStyle() {
@@ -99,15 +88,12 @@ export default {
 </script>
 
 <style scoped>
-/* ─── 루트 ──────────────────────────────── */
-.record-card-root { width: 100%; }
-
 /* ─── 외부 래퍼 ─────────────────────────── */
 .record-card-outer {
   border-radius: var(--radius-xl);
   border: none;
   box-shadow: var(--shadow);
-  width: 100%;
+  flex-shrink: 0;
   background: rgb(38, 37, 43);
 }
 

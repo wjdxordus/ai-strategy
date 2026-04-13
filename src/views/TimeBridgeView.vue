@@ -174,7 +174,7 @@
           <div class="detail-photo-wrap">
             <img v-if="r.thumbnail" :src="r.thumbnail" class="detail-photo-img" alt="기록 사진" />
             <div v-else class="detail-photo-gradient" :style="{ background: r.gradient || '#f0f0f0' }" />
-            <button class="detail-btn-share" @click.stop="sharingRecord = r" aria-label="공유하기">
+            <button class="detail-btn-share" @click.stop="store.sharingRecord = r" aria-label="공유하기">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -268,31 +268,22 @@
       </div>
     </div>
 
-  <!-- 공유 시트 -->
-  <ShareSheet
-    v-if="sharingRecord"
-    :record="sharingRecord"
-    @close="sharingRecord = null"
-  />
-
   </div>
 </template>
 
 <script>
 import { store } from '../store'
-import ShareSheet from '../components/ShareSheet.vue'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default {
   name: 'TimeBridgeView',
-  components: { ShareSheet },
   data() {
     return {
+      store,
       mainTab: 'record_archive',
       viewMode: 'calendar',
       selectedDate: null,
-      sharingRecord: null,
       // Moment Track
       naverMap: null,
       naverMarkers: {},

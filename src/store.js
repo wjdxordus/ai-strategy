@@ -520,6 +520,9 @@ const allHistoryRecords = [
 ]
 
 export const store = Vue.observable({
+  // 공유 시트 (App.vue 루트에서 렌더링)
+  sharingRecord: null,
+
   // 사용자 정보 (Android 온보딩에서 입력)
   userInfo: { nickname: '', homeAddress: '', workAddress: '' },
 
