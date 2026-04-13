@@ -174,6 +174,14 @@
           <div class="detail-photo-wrap">
             <img v-if="r.thumbnail" :src="r.thumbnail" class="detail-photo-img" alt="기록 사진" />
             <div v-else class="detail-photo-gradient" :style="{ background: r.gradient || '#f0f0f0' }" />
+            <button class="detail-btn-share" @click.stop="sharingRecord = r" aria-label="공유하기">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            </button>
           </div>
           <!-- 본문 -->
           <div class="detail-body">
@@ -260,21 +268,31 @@
       </div>
     </div>
 
+  <!-- 공유 시트 -->
+  <ShareSheet
+    v-if="sharingRecord"
+    :record="sharingRecord"
+    @close="sharingRecord = null"
+  />
+
   </div>
 </template>
 
 <script>
 import { store } from '../store'
+import ShareSheet from '../components/ShareSheet.vue'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default {
   name: 'TimeBridgeView',
+  components: { ShareSheet },
   data() {
     return {
       mainTab: 'record_archive',
       viewMode: 'calendar',
       selectedDate: null,
+      sharingRecord: null,
       // Moment Track
       naverMap: null,
       naverMarkers: {},
@@ -792,7 +810,17 @@ export default {
   border: 1px solid var(--border); box-shadow: var(--shadow);
 }
 .detail-card { border-radius: var(--radius-xl); overflow: hidden; background: var(--bg); }
-.detail-photo-wrap { width: 100%; overflow: hidden; }
+.detail-photo-wrap { width: 100%; overflow: hidden; position: relative; }
+.detail-btn-share {
+  position: absolute; top: 12px; right: 12px; z-index: 2;
+  width: 30px; height: 30px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.9);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.detail-btn-share:active { background: rgba(0,0,0,0.6); }
 .detail-photo-img { width: 100%; display: block; object-fit: cover; aspect-ratio: 4 / 3; }
 .detail-photo-gradient { width: 100%; aspect-ratio: 4 / 3; }
 .detail-body { padding: 16px 18px 20px; }

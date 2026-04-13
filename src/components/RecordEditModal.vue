@@ -43,9 +43,11 @@
             <img v-if="draft.thumbnail" :src="draft.thumbnail" class="photo-img" alt="기록 사진" />
             <div v-else class="photo-placeholder" :style="{ background: draft.gradient }" />
             <button class="btn-photo-x" @click="changePhoto" aria-label="사진 변경">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="2.8" stroke-linecap="round">
-                <path d="M18 6L6 18M6 6l12 12"/>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
               </svg>
             </button>
           </div>

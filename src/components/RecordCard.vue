@@ -1,4 +1,5 @@
 <template>
+  <div class="record-card-root">
   <!-- outer: 뉴모피즘 shadow (overflow: hidden 없음) -->
   <div class="record-card-outer">
     <!-- inner: 이미지 클리핑 -->
@@ -7,14 +8,24 @@
       <!-- 사진 영역 -->
       <div class="card-photo" :style="photoStyle">
         <div class="photo-scrim" />
-        <!-- 편집 아이콘 (우측 상단) -->
-        <button class="btn-edit" @click.stop="$emit('edit', record)" aria-label="편집">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-        </button>
+        <!-- 우측 상단 버튼 그룹 -->
+        <div class="photo-actions">
+          <button class="btn-photo-action" @click.stop="showShare = true" aria-label="공유하기">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <button class="btn-photo-action" @click.stop="$emit('edit', record)" aria-label="편집">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
         <div class="photo-meta">
           <span class="meta-weather">{{ record.weather.emoji }}</span>
           <span class="meta-time">{{ record.time }}</span>
@@ -26,7 +37,7 @@
         </div>
       </div>
 
-      <!-- 기록 텍스트 -->
+      <!-- 기록 바디 -->
       <div class="card-body">
         <p class="ai-record">{{ record.aiRecord }}</p>
 
@@ -43,19 +54,35 @@
             #&thinsp;{{ tag }}
           </span>
         </div>
+
       </div>
 
     </div>
   </div>
+
+  <!-- 공유 시트 -->
+  <ShareSheet
+    v-if="showShare"
+    :record="record"
+    @close="showShare = false"
+  />
+
+  </div>
 </template>
 
 <script>
+import ShareSheet from './ShareSheet.vue'
+
 export default {
   name: 'RecordCard',
+  components: { ShareSheet },
   props: {
     record: { type: Object, required: true },
   },
   emits: ['edit'],
+  data() {
+    return { showShare: false }
+  },
   computed: {
     photoStyle() {
       if (this.record.thumbnail) {
@@ -72,12 +99,15 @@ export default {
 </script>
 
 <style scoped>
+/* ─── 루트 ──────────────────────────────── */
+.record-card-root { width: 100%; }
+
 /* ─── 외부 래퍼 ─────────────────────────── */
 .record-card-outer {
   border-radius: var(--radius-xl);
   border: none;
   box-shadow: var(--shadow);
-  flex-shrink: 0;
+  width: 100%;
   background: rgb(38, 37, 43);
 }
 
@@ -114,9 +144,12 @@ export default {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ─── 편집 아이콘 ───────────────────────── */
-.btn-edit {
+/* ─── 사진 우측 상단 버튼 그룹 ─────────── */
+.photo-actions {
   position: absolute; top: 12px; right: 12px; z-index: 2;
+  display: flex; gap: 6px;
+}
+.btn-photo-action {
   width: 30px; height: 30px; border-radius: 50%; border: none;
   background: rgba(0,0,0,0.38);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -124,7 +157,7 @@ export default {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-.btn-edit:active { background: rgba(0,0,0,0.6); }
+.btn-photo-action:active { background: rgba(0,0,0,0.6); }
 
 /* ─── 기록 바디 ─────────────────────────── */
 .card-body {
@@ -163,4 +196,5 @@ export default {
   color: rgba(255,255,255,0.5);
   background: transparent;
 }
+
 </style>
