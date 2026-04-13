@@ -86,7 +86,7 @@
       <div v-if="analyzing" class="analyzing-overlay">
         <div class="analyzing-card">
           <div class="analyzing-spinner" />
-          <p class="analyzing-text">사진을 분석하고<br>기록을 만들고 있어요</p>
+          <p class="analyzing-text">{{ analyzingStep || '사진을 분석하고\n기록을 만들고 있어요' }}</p>
         </div>
       </div>
     </transition>
@@ -97,7 +97,7 @@
 <script>
 import { store, updateRecord } from '../store'
 import { fetchWeather } from '../services/weather'
-import { generateRecord } from '../services/dify'
+import { uploadFile, analyzePhoto } from '../services/dify'
 import TagAddSheet from './TagAddSheet.vue'
 
 export default {
@@ -114,6 +114,7 @@ export default {
       },
       saving: false,
       analyzing: false,
+      analyzingStep: '',
       showTagSheet: false,
     }
   },
@@ -147,9 +148,17 @@ export default {
         window.Android.pickPhoto()
       } else {
         const input = document.createElement('input')
-        input.type = 'file'; input.accept = 'image/*'
+        input.type = 'file'
+        input.accept = 'image/*'
+        input.style.position = 'fixed'
+        input.style.top = '-9999px'
+        input.style.opacity = '0'
+        document.body.appendChild(input)
+
         input.onchange = (e) => {
-          const file = e.target.files[0]; if (!file) return
+          const file = e.target.files[0]
+          document.body.removeChild(input)
+          if (!file) return
           const reader = new FileReader()
           reader.onload = (ev) => this.handlePhotoPicked(JSON.stringify({
             thumbnail: ev.target.result, lat: this.draft.lat, lng: this.draft.lng,
@@ -157,6 +166,14 @@ export default {
           }))
           reader.readAsDataURL(file)
         }
+
+        // 취소 시 DOM 정리
+        const cleanup = () => {
+          if (document.body.contains(input)) document.body.removeChild(input)
+          window.removeEventListener('focus', cleanup)
+        }
+        window.addEventListener('focus', cleanup, { once: true })
+
         input.click()
       }
     },
@@ -164,18 +181,46 @@ export default {
       let picked
       try { picked = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr }
       catch (e) { console.error('[EditModal] 파싱 오류:', e); return }
+
       this.analyzing = true
       try {
         const { thumbnail, lat, lng, timestamp, locationLabel } = picked
-        const weather = await fetchWeather(lat, lng, timestamp)
-        const d = new Date(timestamp)
+        const location = locationLabel || this.draft.location
+        const d = new Date(timestamp || Date.now())
         const time = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
-        const generated = await generateRecord({ thumbnail, location: locationLabel || this.draft.location, time, weather, userInfo: store.userInfo })
-        this.draft = { ...this.draft, thumbnail, lat: lat || this.draft.lat, lng: lng || this.draft.lng,
-          location: locationLabel || this.draft.location, time, weather,
-          aiRecord: generated.aiRecord, emotionTags: generated.emotionTags, categoryTags: generated.categoryTags }
-      } catch (e) { console.error('[EditModal] 사진 처리 오류:', e) }
-      finally { this.analyzing = false }
+
+        // 1단계: 날씨 조회
+        this.analyzingStep = '날씨 정보 조회 중...'
+        const weather = await fetchWeather(lat || this.draft.lat, lng || this.draft.lng, timestamp)
+
+        // 2단계: 사진 업로드
+        this.analyzingStep = '사진 업로드 중...'
+        const uploadFileId = await uploadFile(thumbnail)
+
+        // 3단계: AI 분석
+        this.analyzingStep = 'AI가 기록을 만들고 있어요...'
+        const generated = await analyzePhoto(uploadFileId, location, weather)
+
+        this.draft = {
+          ...this.draft,
+          thumbnail,
+          lat: lat || this.draft.lat,
+          lng: lng || this.draft.lng,
+          location,
+          time,
+          weather,
+          aiRecord: generated.aiRecord,
+          emotionTags: generated.emotionTags,
+          categoryTags: generated.categoryTags,
+        }
+      } catch (e) {
+        console.error('[EditModal] 사진 처리 오류:', e)
+        this.analyzingStep = '오류가 발생했어요'
+        await new Promise(r => setTimeout(r, 1500))
+      } finally {
+        this.analyzing = false
+        this.analyzingStep = ''
+      }
     },
     async save() {
       this.saving = true

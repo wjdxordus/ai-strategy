@@ -1,5 +1,102 @@
 import { CONFIG } from '../config'
 
+// ─── 파일 업로드 ──────────────────────────────────────────────────────────────
+
+/**
+ * base64 data URL → Blob 변환
+ */
+function base64ToBlob(dataUrl) {
+  const [header, data] = dataUrl.split(',')
+  const mime = header.match(/:(.*?);/)[1]
+  const binary = atob(data)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
+/**
+ * 사진 1장 업로드 → upload_file_id 반환
+ * @param {string|Blob} source - base64 data URL 또는 Blob
+ * @param {string} filename
+ */
+export async function uploadFile(source, filename = 'photo.jpg') {
+  const blob = typeof source === 'string' ? base64ToBlob(source) : source
+  const formData = new FormData()
+  formData.append('file', blob, filename)
+  formData.append('user', 'golden-one-file')
+
+  const res = await fetch(`${CONFIG.DIFY_BASE_URL}/files/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.DIFY_API_KEY}`,
+      // Content-Type 미설정 → 브라우저가 multipart boundary 자동 처리
+    },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`파일 업로드 실패 (${res.status}): ${err}`)
+  }
+
+  const data = await res.json()
+  console.log('[Dify] 파일 업로드 완료:', data.id)
+  return data.id
+}
+
+// ─── 사진 분석 워크플로우 ─────────────────────────────────────────────────────
+
+/**
+ * 사진 분석 워크플로우 실행
+ * @param {string} uploadFileId - uploadFile() 반환 id
+ * @param {string} location - 위치 문자열 (네이버 역지오코딩 결과)
+ * @param {{ emoji: string, label: string }} weather - 날씨 객체
+ * @returns {{ aiRecord, categoryTags, emotionTags }}
+ */
+export async function analyzePhoto(uploadFileId, location, weather) {
+  const res = await fetch(`${CONFIG.DIFY_BASE_URL}/workflows/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.DIFY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      inputs: {
+        BEST_CUT: {
+          transfer_method: 'local_file',
+          upload_file_id: uploadFileId,
+          type: 'image',
+        },
+        LOCATION: location || '',
+        WEATHER: weather ? `${weather.emoji} ${weather.label}` : '',
+      },
+      response_mode: 'blocking',
+      user: 'golden-one-file',
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`사진 분석 실패 (${res.status}): ${err}`)
+  }
+
+  const data = await res.json()
+  console.log('[Dify] 워크플로우 응답:', data)
+
+  if (data.data?.status !== 'succeeded') {
+    throw new Error(`워크플로우 오류: ${data.data?.error || data.data?.status}`)
+  }
+
+  const response = data.data.outputs.response
+  return {
+    aiRecord: response.dailyLog || '',
+    categoryTags: Array.isArray(response.category) ? response.category : [],
+    emotionTags: response.emotion
+      ? [{ icon: '💫', label: response.emotion }]
+      : [],
+  }
+}
+
 /**
  * Dify Agent 공통 호출
  * response_mode: blocking → 동기 응답 대기
