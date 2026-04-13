@@ -346,7 +346,7 @@ export default {
 </script>
 
 <style scoped>
-.my { background: var(--bg); min-height: 100%; }
+.my { background: var(--bg); min-height: 100%; overflow-x: hidden; }
 
 /* ─── Sticky Header ─────────────────────────── */
 .my-header {
@@ -460,6 +460,7 @@ export default {
   display: flex; gap: 7px;
   overflow-x: auto; padding: 4px 16px 8px;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 .rec-tags-scroll::-webkit-scrollbar { display: none; }
 .rec-tag {
@@ -547,6 +548,7 @@ export default {
   font-size: 13px; color: var(--text-sub);
   line-height: 1.65; letter-spacing: -0.16px;
   padding-left: 32px; white-space: pre-line;
+  word-break: break-word; overflow-wrap: break-word;
 }
 
 /* ─── 나만의 톤 업로드 ─────────────────────── */

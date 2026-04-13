@@ -78,8 +78,13 @@ export default {
     splashBgStyle() {
       const rec = this.splashRecord
       if (!rec) return { background: '#1d1d1f' }
-      if (rec.thumbnail) return { backgroundImage: `url(${rec.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-      return { background: rec.gradient }
+      if (rec.thumbnail) return {
+        backgroundColor: '#1d1d1f',
+        backgroundImage: `url(${rec.thumbnail})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+      return { background: rec.gradient || '#1d1d1f' }
     },
   },
   mounted() {
@@ -213,6 +218,7 @@ html, body {
   position: fixed; inset: 0; z-index: 9999;
   display: flex; flex-direction: column;
   justify-content: space-between;
+  background: #1d1d1f;
 }
 .splash-scrim {
   position: absolute; inset: 0;
