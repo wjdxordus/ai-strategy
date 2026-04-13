@@ -117,7 +117,7 @@ export default {
     linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 40%, transparent 65%);
 }
 .photo-meta {
-  position: absolute; bottom: 34px; left: 14px; right: 14px;
+  position: absolute; bottom: 12px; left: 14px; right: 14px;
   z-index: 1; display: flex; align-items: center; gap: 5px; overflow: hidden;
 }
 .meta-weather { font-size: 14px; flex-shrink: 0; }

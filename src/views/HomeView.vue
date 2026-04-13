@@ -302,6 +302,10 @@ export default {
   transform: scale(0.93); opacity: 0.5;
 }
 .carousel-item.active { transform: scale(1); opacity: 1; }
+.carousel-item:only-child {
+  width: 100%;
+  transform: scale(1); opacity: 1;
+}
 
 /* ─── DOTS ────────────────────────────────── */
 .dots { display: flex; justify-content: center; gap: 6px; padding: 4px 0 0; }

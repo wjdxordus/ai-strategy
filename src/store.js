@@ -17,21 +17,7 @@ const demoTodayRecords = [
     emotionTags: [{ icon: '🤝', label: '협업' }, { icon: '💡', label: '집중' }],
     categoryTags: ['삼성금융캠퍼스', '워크숍', '팀작업'],
     userNote: '',
-  },
-  {
-    id: 'demo_2',
-    date: new Date().toISOString().slice(0, 10),
-    time: '13:40',
-    location: '경복궁 근정전',
-    lat: 37.5792, lng: 126.9775,
-    thumbnail: '/photos/title.jpg',
-    gradient: 'null',
-    weather: { emoji: '🌤️', label: '맑음' },
-    aiRecord: '경복궁 근정전 아래에서 조상들의 위대함을 느끼다',
-    emotionTags: [{ icon: '🎶', label: '신남' }, { icon: '✨', label: '활기참' }],
-    categoryTags: ['경복궁', '단청', '하늘'],
-    userNote: '',
-  },
+  }
 ]
 
 // 데모용 메모리 기록 (1년 전)
