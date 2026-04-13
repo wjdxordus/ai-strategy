@@ -94,6 +94,20 @@ export default {
     // 1년 전 메모리 기록 로드
     loadMemoryRecords()
 
+    // 모든 기록 썸네일 백그라운드 프리로드
+    this.$nextTick(() => {
+      const urls = store.records
+        .map(r => r.thumbnail)
+        .filter(url => url && url.startsWith('/photos/'))
+      const seen = new Set()
+      urls.forEach(url => {
+        if (seen.has(url)) return
+        seen.add(url)
+        const img = new Image()
+        img.src = url
+      })
+    })
+
     // Android → Web 브릿지 설정
     window._pendingBridgeData = null
     window.DailyLogBridge = {
