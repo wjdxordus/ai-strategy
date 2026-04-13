@@ -20,7 +20,6 @@
       </div>
       <div class="cinema-tab-bar">
         <div class="cinema-tab" :class="{ active: tab === 'story' }" @click="tab = 'story'">스토리</div>
-        <div class="cinema-tab-sep" />
         <div class="cinema-tab" :class="{ active: tab === 'photobook' }" @click="tab = 'photobook'">포토북</div>
       </div>
     </div>
@@ -356,7 +355,6 @@ export default {
   display: flex; align-items: stretch;
   margin-top: 14px;
 }
-.cinema-tab-sep { width: 1px; background: var(--border); align-self: stretch; margin: 6px 0; }
 .cinema-tab {
   position: relative;
   flex: 1; text-align: center;

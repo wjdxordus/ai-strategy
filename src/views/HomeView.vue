@@ -40,6 +40,41 @@
       </div>
     </section>
 
+    <!-- 배너 -->
+    <section class="banner-section">
+      <div class="banner-track" :style="{ transform: `translateX(-${bannerIndex * 100}%)` }">
+        <div class="banner-slide banner-slide-cinema" @click="$router.push('/cinema')">
+          <img src="/images/cinema.png" class="banner-img-half banner-img-left" alt="시네마" />
+          <div class="banner-text banner-text-right">
+            <p class="banner-sub">나의 기록</p>
+            <p class="banner-title">나만의 시네마</p>
+          </div>
+        </div>
+        <div class="banner-slide banner-slide-album" @click="$router.push('/cinema')">
+          <img src="/images/album.png" class="banner-img-album" alt="포토북" />
+          <div class="banner-text banner-text-left">
+            <p class="banner-title">자동으로 완성된</p>
+            <p class="banner-sub">포토북 보러가기</p>
+          </div>
+        </div>
+        <div class="banner-slide banner-slide-monimo">
+          <img src="/images/monimo.png" class="banner-img-monimo" alt="모니모" />
+          <div class="banner-text banner-text-left">
+            <p class="banner-title">모이는 금융</p>
+            <p class="banner-sub">커지는 혜택</p>
+          </div>
+        </div>
+      </div>
+      <div class="banner-dots">
+        <span
+          v-for="(_, i) in 3" :key="i"
+          class="banner-dot"
+          :class="{ active: i === bannerIndex }"
+          @click="bannerIndex = i"
+        />
+      </div>
+    </section>
+
     <!-- 1년 전 오늘 -->
     <section v-if="memoryRecords.length" class="record-section memory-section">
       <div class="section-header">
@@ -90,6 +125,8 @@ export default {
       todayIndex: 0,
       memoryIndex: 0,
       editingRecord: null,
+      bannerIndex: 0,
+      bannerTimer: null,
     }
   },
   computed: {
@@ -106,6 +143,14 @@ export default {
       const days = ['일', '월', '화', '수', '목', '금', '토']
       return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`
     },
+  },
+  mounted() {
+    this.bannerTimer = setInterval(() => {
+      this.bannerIndex = (this.bannerIndex + 1) % 3
+    }, 3000)
+  },
+  beforeDestroy() {
+    clearInterval(this.bannerTimer)
   },
   methods: {
     onTodayScroll() {
@@ -169,6 +214,76 @@ export default {
   height: 18px; width: auto;
   display: inline-block; vertical-align: middle;
   object-fit: contain;
+}
+
+/* ─── BANNER ──────────────────────────────── */
+.banner-section {
+  margin: 0 20px 28px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.banner-track {
+  display: flex;
+  transition: transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.banner-slide {
+  flex-shrink: 0; width: 100%;
+  position: relative; cursor: pointer;
+  aspect-ratio: 21 / 5.6;
+}
+.banner-slide-cinema { background: #f5f0e8; }
+.banner-slide-album  { background: #d4e9ff; }
+.banner-img-album {
+  position: absolute; top: 0; right: 0;
+  width: 50%; height: 100%;
+  object-fit: contain; display: block;
+}
+.banner-slide-monimo { background: #f5f5f5; }
+
+.banner-img-half {
+  position: absolute; top: 0; width: 50%; height: 100%;
+  object-fit: cover; display: block;
+}
+.banner-img-left  { left: 0; }
+.banner-img-right { right: 0; }
+
+.banner-img-monimo {
+  position: absolute; top: 0; right: 0;
+  width: 50%; height: 100%;
+  object-fit: contain; display: block;
+}
+
+.banner-text {
+  position: absolute; top: 0; width: 50%; height: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 18px; gap: 4px;
+}
+.banner-text-left  { left: 0; }
+.banner-text-right { right: 0; }
+
+.banner-title {
+  font-size: 17px; font-weight: 800;
+  color: #111; letter-spacing: -0.5px; line-height: 1.25;
+}
+.banner-sub {
+  font-size: 13px; font-weight: 600;
+  color: rgba(0,0,0,0.55); letter-spacing: -0.2px;
+}
+.banner-dots {
+  position: absolute; bottom: 8px; right: 12px;
+  display: flex; gap: 5px;
+}
+.banner-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  transition: width 0.3s, background 0.3s, border-radius 0.3s;
+  cursor: pointer;
+}
+.banner-dot.active {
+  width: 16px; border-radius: 3px;
+  background: #fff;
 }
 
 /* ─── CAROUSEL ────────────────────────────── */

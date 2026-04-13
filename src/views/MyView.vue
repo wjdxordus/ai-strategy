@@ -10,7 +10,6 @@
           :class="{ active: activeTab === 'tag_album' }"
           @click="switchTab('tag_album')"
         >태그앨범</button>
-        <div class="my-tab-sep" />
         <button
           class="my-tab"
           :class="{ active: activeTab === 'tone_setting' }"
@@ -378,22 +377,19 @@ export default {
   background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
   border-radius: 1px;
 }
-.my-tab-sep {
-  width: 1px; background: var(--border);
-  margin: 8px 0 4px; flex-shrink: 0;
-}
 
 /* ─── 검색 영역 ─────────────────────────────── */
 .search-area { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
 .btn-ai {
   display: flex; align-items: center; gap: 5px; flex-shrink: 0;
-  background: var(--accent); border: 1px solid var(--accent);
+  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
+  border: 1px solid transparent;
   border-radius: var(--radius-pill); padding: 8px 13px;
   font-size: 12px; font-weight: 600; font-family: inherit;
   color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent;
   letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap;
 }
-.btn-ai:active { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-ai:active { background: linear-gradient(90deg, #0055d4 0%, #7c3aed 100%); }
 .btn-back {
   width: 36px; height: 36px; flex-shrink: 0;
   border: 1px solid var(--border); background: var(--bg);

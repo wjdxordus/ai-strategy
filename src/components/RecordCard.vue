@@ -94,7 +94,7 @@ export default {
   border: none;
   box-shadow: var(--shadow);
   flex-shrink: 0;
-  background: rgb(38, 37, 43);
+  background: #ffffff;
 }
 
 /* ─── 내부 카드 (이미지 클리핑) ────────────── */
@@ -148,20 +148,13 @@ export default {
 /* ─── 기록 바디 ─────────────────────────── */
 .card-body {
   position: relative; z-index: 1;
-  margin-top: -20px;
   padding: 16px;
-  background: linear-gradient(
-    to bottom,
-    rgba(58,55,44,0)    0px,
-    rgba(58,55,44,0.85) 20px,
-    rgb(58,55,44)       40px,
-    rgb(38,37,43)       100%
-  );
+  background: #ffffff;
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   display: flex; flex-direction: column; gap: 10px;
 }
 .ai-record {
-  font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.92);
+  font-size: 14px; font-weight: 400; color: rgba(20,20,30,0.88);
   line-height: 1.60; letter-spacing: -0.16px;
   display: -webkit-box; -webkit-line-clamp: 3;
   -webkit-box-orient: vertical; overflow: hidden;
@@ -173,13 +166,12 @@ export default {
   border: none;
 }
 .tag-emotion {
-  color: rgba(255,255,255,0.9);
-  background: linear-gradient(135deg, rgba(70,79,88,0.85), rgba(70,79,88,0.55));
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(50,15,100,0.9);
+  background: rgba(139,92,246,0.1);
+  border: 1px solid rgba(139,92,246,0.2);
 }
 .tag-category {
-  color: rgba(255,255,255,0.5);
+  color: rgba(20,20,30,0.5);
   background: transparent;
 }
 

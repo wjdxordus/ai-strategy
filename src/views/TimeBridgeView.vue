@@ -27,7 +27,6 @@
           :class="{ active: mainTab === 'record_archive' }"
           @click="setMainTab('record_archive')"
         >기록함</button>
-        <div class="tb-main-tab-sep" />
         <button
           class="tb-main-tab"
           :class="{ active: mainTab === 'moment_track' }"
@@ -802,10 +801,6 @@ export default {
   background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
   border-radius: 1px;
 }
-.tb-main-tab-sep {
-  width: 1px; background: var(--border);
-  margin: 8px 0 4px; flex-shrink: 0;
-}
 
 /* ─── 서브 행 ────────────────────────────────── */
 .tb-sub-row {
@@ -822,7 +817,8 @@ export default {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .tb-view-tab.active {
-  background: var(--accent); border-color: var(--accent); color: #fff;
+  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
+  border-color: transparent; color: #fff;
 }
 
 /* ─── 날짜 내비 ──────────────────────────────── */

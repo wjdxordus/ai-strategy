@@ -19,7 +19,6 @@
           <polyline stroke="url(#gnb-grad-home)" points="9 22 9 12 15 12 15 22"/>
         </svg>
       </div>
-      <span class="gnb-label">홈</span>
     </router-link>
 
     <router-link to="/timebridge" class="gnb-item" active-class="active">
@@ -39,7 +38,6 @@
           <polyline stroke="url(#gnb-grad-time)" points="12 6 12 12 16 14"/>
         </svg>
       </div>
-      <span class="gnb-label">타임브릿지</span>
     </router-link>
 
     <router-link to="/cinema" class="gnb-item" active-class="active">
@@ -56,7 +54,7 @@
         </svg>
         <svg class="gnb-icon icon-active" viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <defs>
-            <linearGradient id="gnb-grad-cinema" x1="0%" y1="0%" x2="100%" y2="0%">
+            <linearGradient id="gnb-grad-cinema" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#146ef5"/>
               <stop offset="100%" stop-color="#8B5CF6"/>
             </linearGradient>
@@ -71,7 +69,6 @@
           <line stroke="url(#gnb-grad-cinema)" x1="17" y1="7" x2="22" y2="7"/>
         </svg>
       </div>
-      <span class="gnb-label">시네마</span>
     </router-link>
 
     <router-link to="/my" class="gnb-item" active-class="active">
@@ -91,7 +88,6 @@
           <circle stroke="url(#gnb-grad-my)" cx="12" cy="7" r="4"/>
         </svg>
       </div>
-      <span class="gnb-label">마이</span>
     </router-link>
   </nav>
 </template>
@@ -101,18 +97,18 @@
   position: fixed; bottom: 0; left: 0; right: 0;
   height: calc(58px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border);
-  display: flex; align-items: flex-start;
-  padding-top: 8px; z-index: 200;
+  display: flex; align-items: center;
+  z-index: 200;
 }
 
 .gnb-item {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; gap: 3px;
-  text-decoration: none; color: #777;
+  text-decoration: none; color: #555;
   transition: color 0.2s;
 }
 
@@ -134,18 +130,6 @@
 .gnb-item.active .icon-default { display: none; }
 .gnb-item.active .icon-active  { display: block; }
 
-.gnb-icon { width: 20px; height: 20px; }
+.gnb-icon { width: 24px; height: 24px; }
 
-.gnb-label {
-  font-size: 9px; font-weight: 600;
-  letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap;
-}
-
-/* 활성 탭 라벨 그라데이션 */
-.gnb-item.active .gnb-label {
-  background: linear-gradient(90deg, #146ef5 0%, #8B5CF6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 </style>
