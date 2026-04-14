@@ -258,17 +258,31 @@ export default {
       return [...store.records, ...store.todayRecords]
     },
     tagItems() {
+      // 1단계: 태그별 후보 기록 목록 수집 (최신순 정렬)
       const map = {}
       for (const r of this.allRecords) {
         for (const tag of (r.categoryTags || [])) {
-          if (!map[tag]) map[tag] = { count: 0, record: null }
+          if (!map[tag]) map[tag] = { count: 0, records: [] }
           map[tag].count++
-          if (!map[tag].record || r.date > map[tag].record.date) map[tag].record = r
+          map[tag].records.push(r)
         }
       }
-      return Object.entries(map)
+      for (const tag of Object.keys(map)) {
+        map[tag].records.sort((a, b) => b.date > a.date ? 1 : -1)
+      }
+
+      // 2단계: 빈도 내림차순 정렬
+      const sorted = Object.entries(map)
         .sort((a, b) => b[1].count - a[1].count)
-        .map(([tag, { count, record }]) => ({ tag, count, record }))
+
+      // 3단계: 그리디 유일 배정 — 아직 쓰이지 않은 사진 우선 배정
+      const usedIds = new Set()
+      return sorted.map(([tag, { count, records }]) => {
+        const unique = records.find(r => !usedIds.has(r.id))
+        const record = unique || records[0]  // 모두 사용됐으면 fallback
+        if (record) usedIds.add(record.id)
+        return { tag, count, record }
+      })
     },
     recommendedTags() {
       return this.tagItems.slice(0, 6).map(i => i.tag)

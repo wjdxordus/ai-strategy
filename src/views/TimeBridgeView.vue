@@ -1341,12 +1341,6 @@ export default {
   background: linear-gradient(135deg, #146ef5, #8B5CF6) !important;
   color: #fff !important; border-radius: 50%;
 }
-.picker-cell-dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: linear-gradient(90deg, #146ef5, #8B5CF6);
-  flex-shrink: 0;
-}
-.picker-cell.is-selected .picker-cell-dot { background: rgba(255,255,255,0.7); }
 
 .picker-close-btn {
   display: block; width: calc(100% - 40px); margin: 4px 20px 16px;
