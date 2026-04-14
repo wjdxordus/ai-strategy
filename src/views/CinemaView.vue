@@ -101,59 +101,7 @@
 
     <!-- ── Photo Book 탭 ── -->
     <div v-else class="pb-wrap">
-
-      <!-- 년도 선택 -->
-      <div class="pb-year-bar">
-        <button
-          v-for="y in availableYears"
-          :key="y"
-          class="pb-year-btn"
-          :class="{ active: selectedYear === y }"
-          @click="selectYear(y)"
-        >{{ y }}</button>
-      </div>
-
-      <!-- 페이지 뷰어 -->
-      <div class="pb-viewer">
-        <transition :name="pageDir === 'next' ? 'page-fwd' : 'page-bwd'" mode="out-in">
-          <div class="pb-page" :key="currentPage + '-' + selectedYear">
-            <template v-if="currentPageRecords.length">
-              <div
-                v-for="(rec, i) in currentPageRecords"
-                :key="rec.id"
-                class="pb-card"
-                :style="pbCardStyle(i)"
-                @click="zoomedPhoto = rec"
-              >
-                <div class="pb-card-photo-wrap">
-                  <img v-if="rec.thumbnail" :src="rec.thumbnail" class="pb-card-img" />
-                  <div v-else class="pb-card-img-ph" :style="{ background: rec.gradient }" />
-                </div>
-                <div class="pb-card-caption">
-                  <div class="pb-cap-meta">{{ rec.weather.emoji }} {{ rec.date }} {{ rec.time }}</div>
-                  <div class="pb-cap-loc">📍 {{ rec.location }}</div>
-                  <p class="pb-cap-text">{{ rec.aiRecord }}</p>
-                  <div class="pb-cap-tags">
-                    <span v-for="tag in rec.categoryTags" :key="tag" class="pb-cap-tag">#{{ tag }}</span>
-                  </div>
-                </div>
-              </div>
-            </template>
-            <div v-else class="pb-page-empty">{{ selectedYear }}년 기록이 없어요</div>
-          </div>
-        </transition>
-      </div>
-
-      <!-- 페이지 네비 -->
-      <div class="pb-nav">
-        <button class="pb-nav-btn" :disabled="currentPage === 0" @click="prevPage">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <span class="pb-page-num">{{ currentPage + 1 }} / {{ totalPages }}</span>
-        <button class="pb-nav-btn" :disabled="currentPage >= totalPages - 1" @click="nextPage">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      </div>
+      <PhotoBookEditor v-if="tab === 'photobook'" />
     </div>
 
     <!-- ── 확대 모달 ── -->
@@ -184,11 +132,13 @@
 
 <script>
 import { store } from '../store'
+import PhotoBookEditor from '../components/PhotoBookEditor.vue'
 
 const SLIDE_DURATION = 4000
 
 export default {
   name: 'CinemaView',
+  components: { PhotoBookEditor },
   data() {
     return {
       tab: 'story',
