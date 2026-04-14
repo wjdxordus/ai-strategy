@@ -250,8 +250,9 @@ export default {
 .banner-img-right { right: 0; }
 
 .banner-img-monimo {
-  position: absolute; top: 0; right: -20px;
-  width: 50%; height: 100%;
+  position: absolute; top: 50%; right: 30px;
+  width: 56%; height: 48%;
+  transform: translateY(-50%);
   object-fit: contain; display: block;
 }
 
