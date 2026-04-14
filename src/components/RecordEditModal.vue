@@ -42,6 +42,15 @@
           <div class="photo-wrap">
             <img v-if="draft.thumbnail" :src="draft.thumbnail" class="photo-img" alt="기록 사진" />
             <div v-else class="photo-placeholder" :style="{ background: draft.gradient }" />
+            <!-- 베스트컷 선정 버튼 (여러 장 업로드) -->
+            <button class="btn-photo-x btn-photo-bestcut" @click="pickMultiplePhotos" aria-label="베스트컷 선정">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="13" height="13" rx="2"/>
+                <path d="M5 6V4a2 2 0 012-2h11a2 2 0 012 2v11a2 2 0 01-2 2h-2"/>
+              </svg>
+            </button>
+            <!-- 단일 사진 교체 버튼 -->
             <button class="btn-photo-x" @click="changePhoto" aria-label="사진 변경">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -81,6 +90,51 @@
     <!-- 태그 추가 시트 -->
     <TagAddSheet v-if="showTagSheet" :date="draft.date" @add="addTag" @close="showTagSheet = false" />
 
+    <!-- 베스트컷 선정 로딩 -->
+    <transition name="fade">
+      <div v-if="selectingBestCut" class="analyzing-overlay">
+        <div class="analyzing-card">
+          <div class="analyzing-spinner" />
+          <p class="analyzing-text">{{ selectingStep || '사진을 분석하고\n베스트컷을 고르는 중이에요' }}</p>
+        </div>
+      </div>
+    </transition>
+
+    <!-- 베스트컷 결과 모달 -->
+    <transition name="fade">
+      <div v-if="showBestCutModal && bestCutResult" class="bestcut-overlay" @click.self="showBestCutModal = false">
+        <div class="bestcut-modal">
+          <div class="bestcut-header">
+            <span class="bestcut-title">베스트컷 선정 결과</span>
+            <button class="btn-icon" @click="showBestCutModal = false">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="bestcut-body">
+            <div class="bestcut-meta">
+              <span class="bestcut-badge">{{ bestCutResult.uploadFileIds.length }}장 업로드</span>
+              <span class="bestcut-badge bestcut-badge-status"
+                    :class="{ 'bestcut-badge-ok': bestCutResult.raw.data && bestCutResult.raw.data.status === 'succeeded' }">
+                {{ bestCutResult.raw.data ? bestCutResult.raw.data.status : 'unknown' }}
+              </span>
+            </div>
+            <div class="bestcut-section-label">업로드된 파일 ID</div>
+            <div class="bestcut-ids">
+              <div v-for="(id, i) in bestCutResult.uploadFileIds" :key="i" class="bestcut-id-row">
+                <span class="bestcut-id-num">{{ i + 1 }}</span>
+                <span class="bestcut-id-text">{{ id }}</span>
+              </div>
+            </div>
+            <div class="bestcut-section-label">워크플로우 응답</div>
+            <pre class="bestcut-raw">{{ JSON.stringify(bestCutResult.raw, null, 2) }}</pre>
+          </div>
+        </div>
+      </div>
+    </transition>
+
     <!-- 사진 분석 로딩 -->
     <transition name="fade">
       <div v-if="analyzing" class="analyzing-overlay">
@@ -97,7 +151,7 @@
 <script>
 import { store, updateRecord } from '../store'
 import { fetchWeather } from '../services/weather'
-import { uploadFile, analyzePhoto } from '../services/dify'
+import { uploadFile, analyzePhoto, uploadAndSelectBestCut } from '../services/dify'
 import TagAddSheet from './TagAddSheet.vue'
 
 export default {
@@ -116,6 +170,10 @@ export default {
       analyzing: false,
       analyzingStep: '',
       showTagSheet: false,
+      selectingBestCut: false,
+      selectingStep: '',
+      bestCutResult: null,
+      showBestCutModal: false,
     }
   },
   computed: {
@@ -142,6 +200,54 @@ export default {
       const t = tag.trim().replace(/^#/, '')
       if (t && !this.draft.categoryTags.includes(t))
         this.draft.categoryTags = [...this.draft.categoryTags, t]
+    },
+    pickMultiplePhotos() {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.multiple = true
+      input.style.position = 'fixed'
+      input.style.top = '-9999px'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+
+      input.onchange = async (e) => {
+        const files = Array.from(e.target.files)
+        if (document.body.contains(input)) document.body.removeChild(input)
+        if (!files.length) return
+        await this.handleMultiplePhotos(files)
+      }
+
+      input.click()
+    },
+    async handleMultiplePhotos(files) {
+      this.selectingBestCut = true
+      this.selectingStep = `사진 읽는 중...`
+      try {
+        // File → { data: base64, name: 원본파일명 } 변환
+        const sources = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = ev => resolve({ data: ev.target.result, name: file.name })
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })))
+
+        const result = await uploadAndSelectBestCut(sources, (cur, total) => {
+          this.selectingStep = `업로드 중... (${cur}/${total}장)`
+        })
+
+        this.selectingStep = 'AI가 베스트컷을 고르는 중...'
+        // 결과 저장 후 모달 표시
+        this.bestCutResult = result
+        this.showBestCutModal = true
+      } catch (e) {
+        console.error('[EditModal] 베스트컷 선정 오류:', e)
+        this.selectingStep = `오류: ${e.message}`
+        await new Promise(r => setTimeout(r, 2000))
+      } finally {
+        this.selectingBestCut = false
+        this.selectingStep = ''
+      }
     },
     changePhoto() {
       if (typeof window.Android !== 'undefined' && window.Android.pickPhoto) {
@@ -346,6 +452,11 @@ export default {
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .btn-photo-x:active { background: rgba(0,0,0,0.7); }
+.btn-photo-bestcut {
+  right: 48px; /* 단일 업로드 버튼(28px) + 간격(10px) = 38px, 여기서 10px 더 */
+  background: rgba(20,110,245,0.7);
+}
+.btn-photo-bestcut:active { background: rgba(20,110,245,0.9); }
 
 /* ─── 태그 ──────────────────────────────── */
 .tags-section { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -405,6 +516,70 @@ export default {
   font-size: 15px; font-weight: 600;
   color: var(--text); letter-spacing: -0.16px;
   line-height: 1.55; text-align: center;
+}
+
+/* ─── 베스트컷 결과 모달 ─────────────────── */
+.bestcut-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 700;
+}
+.bestcut-modal {
+  background: var(--bg);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  width: 100%; max-width: 600px;
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bestcut-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.bestcut-title { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+.bestcut-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px 20px 24px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.bestcut-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+.bestcut-badge {
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text-mid);
+}
+.bestcut-badge-ok { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+.bestcut-badge-status:not(.bestcut-badge-ok) { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+.bestcut-section-label {
+  font-size: 11px; font-weight: 700; color: var(--text-sub);
+  letter-spacing: 0.4px; text-transform: uppercase; margin-top: 6px;
+}
+.bestcut-ids { display: flex; flex-direction: column; gap: 4px; }
+.bestcut-id-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-radius: var(--radius);
+  background: #f8f8fa; border: 1px solid var(--border);
+}
+.bestcut-id-num {
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  min-width: 16px; text-align: center;
+}
+.bestcut-id-text {
+  font-size: 11px; font-family: monospace; color: var(--text-mid);
+  word-break: break-all;
+}
+.bestcut-raw {
+  font-size: 11px; font-family: monospace; color: var(--text-mid);
+  background: #f8f8fa; border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px;
+  white-space: pre-wrap; word-break: break-all;
+  overflow-x: auto; line-height: 1.5;
+  max-height: 300px; overflow-y: auto;
 }
 
 /* ─── 트랜지션 ──────────────────────────── */

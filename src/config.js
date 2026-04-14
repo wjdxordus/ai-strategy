@@ -2,7 +2,8 @@
 export const CONFIG = {
   // Dify API 설정
   DIFY_BASE_URL: 'https://api.dify.ai/v1',
-  DIFY_API_KEY: 'app-ZZNXO6hqHb6jf8qUxvZZ6Jf1',  // 파일 업로드 + 워크플로우 공통 키
+  DIFY_API_KEY: 'app-ZZNXO6hqHb6jf8qUxvZZ6Jf1',  // 파일 업로드 + 사진 분석 워크플로우 키
+  DIFY_BESTCUT_WORKFLOW_KEY: 'app-UzjYWrmKQICi5zais3zVrFYL',  // 베스트컷 선정 워크플로우 키
   DIFY_PHOTO_AGENT_KEY: '',   // TODO: 기존 사진 선정 Agent (미사용)
   DIFY_RECORD_AGENT_KEY: '',  // TODO: 기존 기록 생성 Agent (미사용)
 

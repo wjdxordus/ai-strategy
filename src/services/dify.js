@@ -18,12 +18,13 @@ function base64ToBlob(dataUrl) {
  * 사진 1장 업로드 → upload_file_id 반환
  * @param {string|Blob} source - base64 data URL 또는 Blob
  * @param {string} filename
+ * @param {string} userTag - 단일 업로드: 'golden-one-file' / 다중 업로드 루프: 'golden-multi-file'
  */
-export async function uploadFile(source, filename = 'photo.jpg') {
+export async function uploadFile(source, filename = 'photo.jpg', userTag = 'golden-one-file') {
   const blob = typeof source === 'string' ? base64ToBlob(source) : source
   const formData = new FormData()
   formData.append('file', blob, filename)
-  formData.append('user', 'golden-one-file')
+  formData.append('user', userTag)
 
   const res = await fetch(`${CONFIG.DIFY_BASE_URL}/files/upload`, {
     method: 'POST',
@@ -196,4 +197,177 @@ export async function generateRecord({ thumbnail, location, time, weather, userI
     console.warn('[Dify] 기록 생성 실패, fallback 사용:', e.message)
     return fallback
   }
+}
+
+// ─── 자동 파이프라인: 그룹 처리 (베스트컷 선정 → 사진 분석) ─────────────────────
+
+/**
+ * 위치 그룹 1개 전체 처리: 베스트컷 선정 → 사진 분석 → 기록 카드 데이터 반환
+ *
+ * 내부 흐름:
+ *   1) 그룹 내 사진 전체 병렬 업로드 (golden-multi-file)
+ *   2) 베스트컷 선정 워크플로우 호출 → 선정 인덱스 파싱
+ *   3) 선정된 사진의 업로드 ID를 재사용해 사진 분석 호출 (재업로드 없음)
+ *
+ * @param {Array<{thumbnail: string, timestamp: number, lat: number, lng: number}>} photos
+ * @param {string} location
+ * @param {{emoji: string, label: string}} weather
+ * @returns {{ thumbnail: string, aiRecord: string, categoryTags: string[], emotionTags: Array }}
+ */
+export async function processGroupForRecord(photos, location, weather) {
+  if (!photos || photos.length === 0) throw new Error('사진이 없습니다')
+
+  // 1단계: 그룹 내 사진 전체 병렬 업로드
+  const uploadFileIds = await Promise.all(
+    photos.map((photo, i) =>
+      uploadFile(photo.thumbnail, `photo_${i + 1}.jpg`, 'golden-multi-file')
+    )
+  )
+  console.log(`[Dify] 그룹 업로드 완료: ${uploadFileIds.length}장`)
+
+  // 2단계: 베스트컷 선정 워크플로우
+  const bestcutRes = await fetch(`${CONFIG.DIFY_BASE_URL}/workflows/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.DIFY_BESTCUT_WORKFLOW_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      inputs: {
+        images: uploadFileIds.map(id => ({
+          transfer_method: 'local_file',
+          upload_file_id: id,
+          type: 'image',
+        })),
+      },
+      query: '',
+      response_mode: 'blocking',
+      user: 'golden-12345',
+    }),
+  })
+
+  if (!bestcutRes.ok) {
+    const err = await bestcutRes.text()
+    throw new Error(`베스트컷 선정 실패 (${bestcutRes.status}): ${err}`)
+  }
+
+  const bestcutData = await bestcutRes.json()
+  console.log('[Dify] 베스트컷 응답:', bestcutData)
+
+  // 3단계: 선정 인덱스 파싱 → 업로드 ID 및 썸네일 결정
+  const selectedIndex = parseBestCutIndex(bestcutData, uploadFileIds.length)
+  const selectedUploadId = uploadFileIds[selectedIndex]
+  const selectedThumbnail = photos[selectedIndex].thumbnail
+  console.log(`[Dify] 베스트컷 선택: photo_${selectedIndex + 1}/${photos.length}`)
+
+  // 4단계: 선정된 업로드 ID 재사용 → 사진 분석 (재업로드 없음)
+  const generated = await analyzePhoto(selectedUploadId, location, weather)
+
+  return {
+    thumbnail: selectedThumbnail,
+    aiRecord: generated.aiRecord,
+    categoryTags: generated.categoryTags,
+    emotionTags: generated.emotionTags,
+  }
+}
+
+/**
+ * 베스트컷 워크플로우 응답에서 선정된 사진 인덱스(0-based) 파싱
+ * 워크플로우 응답 형식에 따라 다양한 경우를 처리
+ */
+function parseBestCutIndex(raw, total) {
+  try {
+    const response = raw?.data?.outputs?.response
+    if (response == null) return 0
+
+    // 문자열: "photo_3.jpg", "3", "2" 등
+    if (typeof response === 'string') {
+      const fileMatch = response.match(/photo_(\d+)/i)
+      if (fileMatch) {
+        const idx = parseInt(fileMatch[1], 10) - 1  // 1-based → 0-based
+        if (idx >= 0 && idx < total) return idx
+      }
+      const num = parseInt(response, 10)
+      if (!isNaN(num)) {
+        if (num >= 1 && num <= total) return num - 1  // 1-based
+        if (num >= 0 && num < total) return num        // 0-based
+      }
+    }
+
+    // 객체: { filename, index, selected_index 등 }
+    if (typeof response === 'object') {
+      const filename = response.filename || response.file || response.selected_file || response.best_cut
+      if (typeof filename === 'string') {
+        const fileMatch = filename.match(/photo_(\d+)/i)
+        if (fileMatch) {
+          const idx = parseInt(fileMatch[1], 10) - 1
+          if (idx >= 0 && idx < total) return idx
+        }
+      }
+      const idx = response.index ?? response.selected_index ?? response.best_index
+      if (typeof idx === 'number' && idx >= 0 && idx < total) return idx
+    }
+  } catch (e) {
+    console.warn('[Dify] 베스트컷 인덱스 파싱 실패, 첫 번째 사진 사용:', e)
+  }
+  return 0  // fallback
+}
+
+// ─── 베스트컷 선정 워크플로우 ──────────────────────────────────────────────────
+
+/**
+ * 여러 장 사진 업로드 후 베스트컷 1장 선정
+ * @param {Array<string|Blob>} sources - base64 data URL 또는 Blob 배열
+ * @param {Function} onProgress - (current, total) 진행 콜백
+ * @returns {{ uploadFileIds: string[], raw: object }} 업로드 ID 배열 + 워크플로우 원본 응답
+ */
+export async function uploadAndSelectBestCut(sources, onProgress) {
+  // 1단계: 전체 파일 병렬 업로드 → ID 수집
+  // sources 항목은 base64 문자열 또는 { data: base64, name: 원본파일명 } 객체
+  if (onProgress) onProgress(0, sources.length)
+
+  let completedCount = 0
+  const uploadFileIds = await Promise.all(
+    sources.map((item, i) => {
+      const source = typeof item === 'object' && item.data ? item.data : item
+      const filename = typeof item === 'object' && item.name ? item.name : `photo_${i + 1}.jpg`
+      return uploadFile(source, filename, 'golden-multi-file').then(id => {
+        completedCount++
+        if (onProgress) onProgress(completedCount, sources.length)
+        console.log(`[Dify] 업로드 완료 (${completedCount}/${sources.length}) ${filename}: ${id}`)
+        return id
+      })
+    })
+  )
+
+  // 2단계: 베스트컷 선정 워크플로우 호출
+  const images = uploadFileIds.map(id => ({
+    transfer_method: 'local_file',
+    upload_file_id: id,
+    type: 'image',
+  }))
+
+  const res = await fetch(`${CONFIG.DIFY_BASE_URL}/workflows/run`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CONFIG.DIFY_BESTCUT_WORKFLOW_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      inputs: { images },
+      query: '',
+      response_mode: 'blocking',
+      user: 'golden-12345',
+    }),
+  })
+
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`베스트컷 선정 실패 (${res.status}): ${err}`)
+  }
+
+  const raw = await res.json()
+  console.log('[Dify] 베스트컷 워크플로우 응답:', raw)
+
+  return { uploadFileIds, raw }
 }

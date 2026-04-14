@@ -177,12 +177,12 @@ export default {
 
 /* ─── SECTION ─────────────────────────────── */
 .record-section { padding: 40px 0 20px; }
-.memory-section { padding-top: 32px; position: relative; }
+.memory-section { padding-top: 20px; position: relative; }
 .memory-section::before {
   content: '';
   display: block; height: 1px;
   background: linear-gradient(to right, transparent, var(--border), transparent);
-  margin: 0 24px 32px;
+  margin: 0 24px 20px;
 }
 
 .section-header { padding: 0 24px; margin-bottom: 20px; }
@@ -218,7 +218,7 @@ export default {
 
 /* ─── BANNER ──────────────────────────────── */
 .banner-section {
-  margin: 0 20px 28px;
+  margin: 0 20px 10px;
   border-radius: var(--radius-xl);
   overflow: hidden;
   position: relative;
@@ -250,7 +250,7 @@ export default {
 .banner-img-right { right: 0; }
 
 .banner-img-monimo {
-  position: absolute; top: 0; right: 0;
+  position: absolute; top: 0; right: -20px;
   width: 50%; height: 100%;
   object-fit: contain; display: block;
 }

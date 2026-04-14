@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import { fetchWeather } from './services/weather'
-import { selectBestPhoto, generateRecord } from './services/dify'
+import { processGroupForRecord } from './services/dify'
 
 // 데모용 오늘 기록 (Android 데이터 없을 때 표시)
 const demoTodayRecords = [
@@ -831,47 +831,53 @@ export async function processPhotoGroups(photoGroups, userInfo, date) {
   )
 
   store.processingStatus = 'loading_ai'
+  store.processingProgress = 0
   const total = photoGroups.length
-  const records = []
+  let completedCount = 0
 
-  // 2단계: 그룹별 AI 순차 처리
-  for (let i = 0; i < photoGroups.length; i++) {
-    const group = photoGroups[i]
-    const weather = weatherResults[i].status === 'fulfilled'
-      ? weatherResults[i].value
-      : { emoji: '🌡️', label: '알 수 없음' }
+  // 2단계: 그룹별 병렬 AI 처리
+  // 각 그룹은 독립적으로: 업로드(병렬) → 베스트컷 선정 → 사진 분석 → 기록 카드
+  const groupResults = await Promise.allSettled(
+    photoGroups.map(async (group, i) => {
+      const weather = weatherResults[i].status === 'fulfilled'
+        ? weatherResults[i].value
+        : { emoji: '🌡️', label: '알 수 없음' }
 
-    const timestamp = group.startTime || (group.photos[0]?.timestamp) || Date.now()
-    const d = new Date(timestamp)
-    const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+      const timestamp = group.startTime || group.photos?.[0]?.timestamp || Date.now()
+      const d = new Date(timestamp)
+      const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 
-    const bestThumbnail = await selectBestPhoto(group.photos)
-    const generated = await generateRecord({
-      thumbnail: bestThumbnail,
-      location: group.locationLabel,
-      time,
-      weather,
-      userInfo,
+      const result = await processGroupForRecord(group.photos, group.locationLabel, weather)
+
+      completedCount++
+      store.processingProgress = Math.round((completedCount / total) * 100)
+
+      return {
+        id: group.groupId,
+        date,
+        time,
+        location: group.locationLabel,
+        lat: group.centerLat,
+        lng: group.centerLng,
+        thumbnail: result.thumbnail,
+        gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        weather,
+        aiRecord: result.aiRecord,
+        emotionTags: result.emotionTags,
+        categoryTags: result.categoryTags,
+        userNote: '',
+      }
     })
+  )
 
-    records.push({
-      id: group.groupId,
-      date,
-      time,
-      location: group.locationLabel,
-      lat: group.centerLat,
-      lng: group.centerLng,
-      thumbnail: bestThumbnail,
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      weather,
-      aiRecord: generated.aiRecord,
-      emotionTags: generated.emotionTags,
-      categoryTags: generated.categoryTags,
-      userNote: '',
+  // 성공한 그룹만 수집, 실패한 그룹은 경고 로그
+  const records = groupResults
+    .map((result, i) => {
+      if (result.status === 'fulfilled') return result.value
+      console.error(`[store] 그룹 ${i + 1} 처리 실패:`, result.reason)
+      return null
     })
-
-    store.processingProgress = Math.round(((i + 1) / total) * 100)
-  }
+    .filter(Boolean)
 
   store.todayRecords = records
   store.processingStatus = 'done'
