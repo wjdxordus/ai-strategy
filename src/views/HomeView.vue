@@ -82,7 +82,7 @@
           <h2 class="section-title">1년전 오늘</h2>
           <span class="section-date">{{ memoryLabel }}</span>
         </div>
-        <p class="section-desc">1년 전 오늘 레코드가 있어요</p>
+        <p class="section-desc">1년 전 오늘의 기록이 도착했어요</p>
       </div>
       <div class="carousel" ref="memoryStrip" @scroll.passive="onMemoryScroll">
         <RecordCard

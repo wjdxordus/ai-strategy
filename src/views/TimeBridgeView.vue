@@ -31,7 +31,7 @@
           class="tb-main-tab"
           :class="{ active: mainTab === 'moment_track' }"
           @click="setMainTab('moment_track')"
-        >모멘트 트랙</button>
+        >모먼트 트랙</button>
       </div>
 
       <!-- 서브 행 (Record Archive 전용) -->
@@ -54,7 +54,12 @@
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <span class="tb-nav-date">{{ selectedDateLabel }}</span>
+          <button class="tb-nav-date-btn" @click="openDatePicker">
+            <span class="tb-nav-date">{{ selectedDateLabel }}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;opacity:0.5">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
           <button class="tb-nav-btn" :disabled="!hasNextDate" @click="nextDate">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"/>
@@ -345,6 +350,53 @@
       </div>
     </div>
 
+    <!-- ─── 날짜 피커 (v-if 체인 바깥) ──────────── -->
+    <transition name="picker-fade">
+      <div v-if="showDatePicker" class="picker-overlay" @click.self="closeDatePicker">
+        <transition name="picker-slide">
+          <div v-if="showDatePicker" class="picker-sheet">
+            <div class="picker-handle" />
+            <div class="picker-header">
+              <button class="picker-month-btn" @click="pickerPrevMonth">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <span class="picker-month-label">{{ pickerMonthLabel }}</span>
+              <button class="picker-month-btn" @click="pickerNextMonth" :disabled="!pickerCanGoNext">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            </div>
+            <div class="picker-week-row">
+              <span v-for="d in ['일','월','화','수','목','금','토']" :key="d" class="picker-week-day">{{ d }}</span>
+            </div>
+            <div class="picker-grid">
+              <button
+                v-for="(cell, i) in pickerCells"
+                :key="i"
+                class="picker-cell"
+                :class="{
+                  empty: !cell,
+                  'has-record': cell && !!recordMap[cell.dateStr],
+                  'is-selected': cell && cell.dateStr === selectedDate,
+                  'is-today': cell && cell.dateStr === todayStr,
+                  'is-sun': i % 7 === 0,
+                  'is-sat': i % 7 === 6,
+                }"
+                :disabled="!cell || !recordMap[cell.dateStr]"
+                @click="cell && pickDate(cell.dateStr)"
+              >
+                <span v-if="cell">{{ cell.day }}</span>
+              </button>
+            </div>
+            <button class="picker-close-btn" @click="closeDatePicker">닫기</button>
+          </div>
+        </transition>
+      </div>
+    </transition>
+
   </div>
 </template>
 
@@ -361,6 +413,10 @@ export default {
       mainTab: 'record_archive',
       viewMode: 'calendar',
       selectedDate: null,
+      // 날짜 피커
+      showDatePicker: false,
+      pickerYear: new Date().getFullYear(),
+      pickerMonth: new Date().getMonth() + 1,
       // Moment Track
       naverMap: null,
       naverMarkers: {},
@@ -477,6 +533,25 @@ export default {
     hasNextDate() {
       return this.allDates.indexOf(this.selectedDate) > 0
     },
+    pickerMonthLabel() {
+      return `${this.pickerYear}년 ${this.pickerMonth}월`
+    },
+    pickerCanGoNext() {
+      const now = new Date()
+      return !(this.pickerYear === now.getFullYear() && this.pickerMonth === now.getMonth() + 1)
+    },
+    pickerCells() {
+      const { pickerYear: y, pickerMonth: m } = this
+      const mm = String(m).padStart(2, '0')
+      const firstDay = new Date(y, m - 1, 1).getDay()
+      const lastDate = new Date(y, m, 0).getDate()
+      const cells = Array(firstDay).fill(null)
+      for (let d = 1; d <= lastDate; d++) {
+        cells.push({ day: d, dateStr: `${y}-${mm}-${String(d).padStart(2, '0')}` })
+      }
+      while (cells.length % 7 !== 0) cells.push(null)
+      return cells
+    },
     mapRecords() {
       return this.allRecords.filter(r => r.lat && r.lng)
     },
@@ -549,6 +624,29 @@ export default {
     nextDate() {
       const idx = this.allDates.indexOf(this.selectedDate)
       if (idx > 0) this.selectedDate = this.allDates[idx - 1]
+    },
+    openDatePicker() {
+      const d = this.selectedDate ? new Date(this.selectedDate) : new Date()
+      this.pickerYear = d.getFullYear()
+      this.pickerMonth = d.getMonth() + 1
+      this.showDatePicker = true
+    },
+    closeDatePicker() {
+      this.showDatePicker = false
+    },
+    pickerPrevMonth() {
+      if (this.pickerMonth === 1) { this.pickerYear--; this.pickerMonth = 12 }
+      else this.pickerMonth--
+    },
+    pickerNextMonth() {
+      if (!this.pickerCanGoNext) return
+      if (this.pickerMonth === 12) { this.pickerYear++; this.pickerMonth = 1 }
+      else this.pickerMonth++
+    },
+    pickDate(dateStr) {
+      if (!this.recordMap[dateStr]) return
+      this.selectedDate = dateStr
+      this.closeDatePicker()
     },
     // ── 여정 헬퍼 ────────────────────────────────
     extractTripArea(location) {
@@ -832,6 +930,12 @@ export default {
 }
 .tb-nav-btn:active { background: #f5f5f5; }
 .tb-nav-btn:disabled { opacity: 0.35; cursor: default; }
+.tb-nav-date-btn {
+  display: flex; align-items: center;
+  background: none; border: none; cursor: pointer; padding: 4px 6px;
+  border-radius: var(--radius); -webkit-tap-highlight-color: transparent;
+}
+.tb-nav-date-btn:active { background: var(--accent-light); }
 .tb-nav-date {
   font-size: 13px; font-weight: 600;
   color: var(--text); letter-spacing: -0.16px; white-space: nowrap;
@@ -1162,4 +1266,101 @@ export default {
   border: 1px solid rgba(20,110,245,0.2);
   border-radius: var(--radius-pill); padding: 3px 10px;
 }
+
+/* ─── 날짜 피커 ──────────────────────────────── */
+.picker-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-end;
+}
+.picker-sheet {
+  width: 100%; background: var(--bg);
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 env(safe-area-inset-bottom, 16px);
+  box-shadow: 0 -4px 32px rgba(0,0,0,0.12);
+}
+.picker-handle {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--border); margin: 12px auto 4px;
+}
+.picker-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px 4px;
+}
+.picker-month-label {
+  font-size: 15px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.3px;
+}
+.picker-month-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; color: var(--text);
+  border-radius: var(--radius); -webkit-tap-highlight-color: transparent;
+}
+.picker-month-btn:active { background: var(--accent-light); }
+.picker-month-btn:disabled { opacity: 0.25; cursor: default; }
+
+.picker-week-row {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  padding: 4px 12px 2px;
+}
+.picker-week-day {
+  text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--text-sub); letter-spacing: 0.5px;
+}
+.picker-week-row span:first-child { color: #ee1d36; }
+.picker-week-row span:last-child  { color: var(--accent); }
+
+.picker-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  padding: 4px 12px 8px; gap: 2px 0;
+}
+.picker-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; aspect-ratio: 1;
+  background: none; border: none; cursor: pointer;
+  border-radius: var(--radius); color: var(--text-sub);
+  font-size: 14px; font-weight: 400;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s;
+}
+.picker-cell.empty { pointer-events: none; }
+.picker-cell:disabled { cursor: default; opacity: 0.3; }
+.picker-cell.has-record { color: var(--text); font-weight: 600; }
+.picker-cell.has-record:active { background: var(--accent-light); }
+.picker-cell.is-sun.has-record { color: #ee1d36; }
+.picker-cell.is-sat.has-record { color: var(--accent); }
+.picker-cell.is-today { position: relative; }
+.picker-cell.is-today::before {
+  content: ''; position: absolute;
+  inset: 4px; border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  pointer-events: none;
+}
+.picker-cell.is-selected {
+  background: linear-gradient(135deg, #146ef5, #8B5CF6) !important;
+  color: #fff !important; border-radius: 50%;
+}
+.picker-cell-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: linear-gradient(90deg, #146ef5, #8B5CF6);
+  flex-shrink: 0;
+}
+.picker-cell.is-selected .picker-cell-dot { background: rgba(255,255,255,0.7); }
+
+.picker-close-btn {
+  display: block; width: calc(100% - 40px); margin: 4px 20px 16px;
+  padding: 13px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border); background: var(--bg);
+  font-size: 14px; font-weight: 600; color: var(--text-mid);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.picker-close-btn:active { background: #f5f5f5; }
+
+/* 피커 트랜지션 */
+.picker-fade-enter-active, .picker-fade-leave-active { transition: opacity 0.22s; }
+.picker-fade-enter, .picker-fade-leave-to { opacity: 0; }
+.picker-slide-enter-active { transition: transform 0.28s cubic-bezier(0.32,0.72,0,1); }
+.picker-slide-leave-active  { transition: transform 0.22s ease-in; }
+.picker-slide-enter, .picker-slide-leave-to { transform: translateY(100%); }
 </style>
