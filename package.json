@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "express": "^4.18.2",
+    "mind-elixir": "^5.10.0",
     "vue": "^2.7.14",
     "vue-router": "^3.6.5"
   },

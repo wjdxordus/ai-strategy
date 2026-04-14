@@ -766,7 +766,7 @@ const allHistoryRecords = [
     weather: { emoji: '☁️', label: '흐림' },
     aiRecord: '꽃무늬 버킷햇을 꾹 눌러쓰고 미끄럼틀 위로 올라가는 뒷모습. 잠깐 주저하는 듯 멈췄다가 이내 쭈욱 내려갔다. 스플라스 리솜에서의 봄 물놀이.',
     emotionTags: [{ icon: '🎢', label: '짜릿함' }, { icon: '🌊', label: '물놀이' }],
-    categoryTags: ['워터파크', '스플라스리솜', '덕산', '예산'],
+    categoryTags: ['물놀이', '워터파크', '스플라스리솜', '덕산', '예산'],
     userNote: '',
   },
   {
