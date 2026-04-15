@@ -190,7 +190,7 @@
             </div>
             <p v-if="opt.example" class="tone-example">{{ opt.example }}</p>
             <div v-if="opt.key === 'custom' && toneStyle === 'custom'" class="custom-section" @click.stop>
-              <button class="btn-learn" @click="pickFile">나만의 문체 익혀하기</button>
+              <button class="btn-learn" @click="pickFile">나만의 문체 학습하기</button>
               <input
                 ref="fileInput"
                 type="file"
@@ -255,7 +255,7 @@ export default {
         {
           key: 'diary',
           label: '제목일기처럼',
-          example: '[제목: 벚꽃 거들 뿐]\n인생샷 건지려다 잇몸 만개한 사진만 99장 남음. 꽃구경 핑계고 결국 우리의 수다가 본체였던 완벽한 봄날의 기록.',
+          example: '[제목: 벚꽃은 거들 뿐]\n인생샷 건지려다 잇몸 만개한 사진만 99장 남음. 꽃구경 핑계고 결국 우리의 수다가 본체였던 완벽한 봄날의 기록.',
         }
       ],
     }

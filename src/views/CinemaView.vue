@@ -24,78 +24,62 @@
       </div>
     </div>
 
-    <!-- ── Story 탭 ── -->
+    <!-- ── Story 탭 — 움직이는 신문 ── -->
     <div v-if="tab === 'story'" class="story-wrap">
-      <p class="story-heading">{{ currentMonthLabel }}의 나의 이야기</p>
+      <div class="newspaper">
 
-      <div class="story-player">
-        <!-- 슬라이드 스테이지 -->
-        <div class="story-stage">
-          <transition name="sf">
-            <div
-              v-if="storyRecords.length"
-              :key="currentSlide"
-              class="story-slide"
-              :style="slideBg(currentSlide)"
-            >
-              <div class="story-scrim-top" />
-              <div class="story-scrim-bot" />
-              <div class="story-weather-badge">
-                {{ storyRecords[currentSlide].weather.emoji }}
-                {{ storyRecords[currentSlide].weather.label }}
-              </div>
-              <div class="story-bottom-info">
-                <p class="story-meta-line">
-                  {{ storyRecords[currentSlide].time }}&nbsp;·&nbsp;📍 {{ storyRecords[currentSlide].location }}
-                </p>
-                <p class="story-record-text">{{ storyRecords[currentSlide].aiRecord }}</p>
-                <div class="story-tags-row">
-                  <span v-for="tag in storyRecords[currentSlide].categoryTags" :key="tag" class="story-tag">#{{ tag }}</span>
-                </div>
-              </div>
-            </div>
-          </transition>
-          <div v-if="!storyRecords.length" class="story-empty-state">이달의 기록이 없어요</div>
-          <!-- 좌우 탭 영역 -->
-          <div class="story-tap-left"  @click="prevSlide" />
-          <div class="story-tap-right" @click="nextSlide" />
+        <!-- 마스트헤드 -->
+        <div class="np-masthead">
+          <div class="np-masthead-inner">
+            <span class="np-edition">제 {{ editionNumber }}호</span>
+            <h1 class="np-title">Ai-ary 일보</h1>
+            <span class="np-date">{{ todayLabel }}</span>
+          </div>
+          <div class="np-masthead-rule" />
         </div>
 
-        <!-- 컨트롤 바 -->
-        <div class="story-ctrl-bar">
-          <div class="story-segs">
-            <div v-for="(r, i) in storyRecords" :key="i" class="story-seg-track">
-              <div class="story-seg-fill" :style="segFill(i)" />
-            </div>
+        <!-- 메인 섹션: 영상(좌) + 기록1(우) -->
+        <div class="np-main">
+          <div class="np-vcell np-vcell--1">
+            <video
+              src="/videos/video_kookmin.mp4"
+              autoplay muted loop playsinline
+              class="np-video"
+            />
           </div>
-          <div class="story-btns">
-            <button class="s-btn" @click="prevSlide">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
-            </button>
-            <button class="s-btn s-play" @click="togglePlay">
-              <svg v-if="!playing" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-              <svg v-else           width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-            </button>
-            <button class="s-btn" @click="nextSlide">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z"/></svg>
-            </button>
-            <span class="s-counter">{{ currentSlide + 1 }} / {{ storyRecords.length }}</span>
+          <div class="np-tcell np-tcell--1">
+            <div class="np-rule" />
+            <h2 class="np-headline">봄 캠퍼스에서,<br>배움과 동료</h2>
+            <div class="np-rule" />
+            <p class="np-byline">📍 국민대학교 &nbsp;·&nbsp; ☀️ 맑음</p>
+            <p class="np-body">
+              {{ typedText1 }}<span v-if="typingPhase === 1" class="np-cursor">|</span>
+            </p>
           </div>
         </div>
 
-        <!-- 필름스트립 -->
-        <div class="story-filmstrip" ref="filmstrip">
-          <div
-            v-for="(r, i) in storyRecords"
-            :key="r.id"
-            class="film-cell"
-            :class="{ active: i === currentSlide }"
-            @click="goToSlide(i)"
-          >
-            <img v-if="r.thumbnail" :src="r.thumbnail" class="film-img" />
-            <div v-else class="film-ph" :style="{ background: r.gradient }" />
+        <!-- 중간 구분선 -->
+        <div class="np-h-rule" />
+
+        <!-- 서브 섹션: 기록2(좌) + 영상(우) -->
+        <div class="np-sub">
+          <div class="np-tcell np-tcell--2">
+            <h2 class="np-headline np-headline--sm">두 발로 선 오늘의<br>작은 영웅</h2>
+            <div class="np-rule" />
+            <p class="np-byline">📍 성동구 옥수동 &nbsp;·&nbsp; ☀️ 맑음</p>
+            <p class="np-body">
+              {{ typedText2 }}<span v-if="typingPhase === 2" class="np-cursor">|</span>
+            </p>
+          </div>
+          <div class="np-vcell np-vcell--2">
+            <video
+              src="/videos/video_oksu.mp4"
+              autoplay muted loop playsinline
+              class="np-video"
+            />
           </div>
         </div>
+
       </div>
     </div>
 
@@ -134,19 +118,32 @@
 import { store } from '../store'
 import PhotoBookEditor from '../components/PhotoBookEditor.vue'
 
-const SLIDE_DURATION = 4000
+// ── 신문 기사 원고 ─────────────────────────────────────────────────────────────
+const NP_TEXT_1 =
+  '꽃샘추위가 물러난 봄날 오전, 국민대학교 캠퍼스에서 교육 프로그램에 참여했다. ' +
+  '강의를 마치고 따스한 햇살 아래 동료들과 나란히 섰다. ' +
+  '각자의 자리에서 묵묵히 걸어온 사람들이 같은 봄볕 아래 잠시 숨을 고른 순간, ' +
+  '그 연대감이 사진 한 장에 고스란히 담겼다.'
+
+const NP_TEXT_2 =
+  '봄볕이 거실 가득 들던 오후, 옥수동 집에서 아이가 처음으로 두 발을 딛고 섰다. ' +
+  '흔들리는 몸을 스스로 잡아가며 한 걸음, 또 한 걸음. ' +
+  '넘어질 듯 버텨낸 그 작은 발걸음이 카메라 너머로도 선명하게 느껴졌다. ' +
+  '오늘 이 순간은 오래 기억될 것 같다.'
+
+const NP_SPEED = 38  // ms / 글자
 
 export default {
   name: 'CinemaView',
   components: { PhotoBookEditor },
+
   data() {
     return {
       tab: 'story',
-      // Story
-      playing: false,
-      currentSlide: 0,
-      slideProgress: 0,
-      timer: null,
+      // 신문 타이핑
+      typedText1: '',
+      typedText2: '',
+      typingPhase: 0,   // 0: 미시작 | 1: text1 타이핑 | 2: text2 타이핑 | 3: 완료
       // Photo Book
       selectedYear: new Date().getFullYear(),
       currentPage: 0,
@@ -154,14 +151,20 @@ export default {
       zoomedPhoto: null,
     }
   },
+
+  created() {
+    this._typeTimers = []   // Vue 2 — _ 접두사는 reactive 프록시 제외
+  },
+
   computed: {
-    currentMonthLabel() {
-      return `${new Date().getMonth() + 1}월`
-    },
-    storyRecords() {
+    editionNumber() {
       const now = new Date()
-      const prefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      return store.records.filter(r => r.date && r.date.startsWith(prefix))
+      return Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000)
+    },
+    todayLabel() {
+      const d = new Date()
+      const days = ['일', '월', '화', '수', '목', '금', '토']
+      return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}(${days[d.getDay()]})`
     },
     availableYears() {
       const years = [...new Set(
@@ -184,73 +187,67 @@ export default {
       return this.yearRecords.slice(start, start + 3)
     },
   },
+
   watch: {
     tab(val) {
-      if (val !== 'story') this.stopTimer()
+      if (val === 'story') {
+        this.$nextTick(() => this.startNewspaper())
+      } else {
+        this.stopNewspaper()
+      }
     },
   },
+
+  mounted() {
+    if (this.tab === 'story') {
+      this.$nextTick(() => this.startNewspaper())
+    }
+  },
+
   beforeDestroy() {
-    this.stopTimer()
+    this.stopNewspaper()
   },
+
   methods: {
-    // ── Story ──────────────────────────────────
-    slideBg(i) {
-      const r = this.storyRecords[i]
-      if (!r) return {}
-      return r.thumbnail
-        ? { backgroundImage: `url(${r.thumbnail})` }
-        : { background: r.gradient || '#222' }
-    },
-    segFill(i) {
-      if (i < this.currentSlide) return { width: '100%' }
-      if (i > this.currentSlide) return { width: '0%' }
-      return { width: this.slideProgress + '%' }
-    },
-    togglePlay() {
-      this.playing ? this.stopTimer() : this.startTimer()
-    },
-    startTimer() {
-      if (!this.storyRecords.length) return
-      this.playing = true
-      const tick = 50
-      const inc = (tick / SLIDE_DURATION) * 100
-      this.timer = setInterval(() => {
-        this.slideProgress += inc
-        if (this.slideProgress >= 100) {
-          this.slideProgress = 0
-          this.currentSlide = (this.currentSlide + 1) % this.storyRecords.length
-          this.scrollFilmstrip()
-        }
-      }, tick)
-    },
-    stopTimer() {
-      this.playing = false
-      if (this.timer) { clearInterval(this.timer); this.timer = null }
-    },
-    prevSlide() {
-      this.slideProgress = 0
-      this.currentSlide = Math.max(0, this.currentSlide - 1)
-      this.scrollFilmstrip()
-    },
-    nextSlide() {
-      this.slideProgress = 0
-      this.currentSlide = (this.currentSlide + 1) % Math.max(1, this.storyRecords.length)
-      this.scrollFilmstrip()
-    },
-    goToSlide(i) {
-      this.slideProgress = 0
-      this.currentSlide = i
-      this.scrollFilmstrip()
-    },
-    scrollFilmstrip() {
-      this.$nextTick(() => {
-        const strip = this.$refs.filmstrip
-        if (!strip) return
-        const cell = strip.children[this.currentSlide]
-        if (cell) cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    // ── 신문 타이핑 ────────────────────────────────────────────────────────
+    startNewspaper() {
+      this.stopNewspaper()
+      this.typedText1 = ''
+      this.typedText2 = ''
+      this.typingPhase = 1
+
+      this.typeText(NP_TEXT_1, 'typedText1', NP_SPEED, () => {
+        const t = setTimeout(() => {
+          this.typingPhase = 2
+          this.typeText(NP_TEXT_2, 'typedText2', NP_SPEED, () => {
+            this.typingPhase = 3
+          })
+        }, 700)
+        this._typeTimers.push(t)
       })
     },
-    // ── Photo Book ─────────────────────────────
+
+    stopNewspaper() {
+      this._typeTimers.forEach(clearTimeout)
+      this._typeTimers = []
+    },
+
+    typeText(fullText, key, speed, onDone) {
+      let i = 0
+      const tick = () => {
+        if (i >= fullText.length) {
+          if (onDone) onDone()
+          return
+        }
+        this[key] += fullText[i++]
+        const t = setTimeout(tick, speed)
+        this._typeTimers.push(t)
+      }
+      const t = setTimeout(tick, speed)
+      this._typeTimers.push(t)
+    },
+
+    // ── Photo Book ──────────────────────────────────────────────────────────
     selectYear(y) {
       this.selectedYear = y
       this.currentPage = 0
@@ -321,126 +318,91 @@ export default {
   border-radius: 1px;
 }
 
-/* ── Story ────────────────────────────────── */
-.story-wrap { padding: 20px; }
-.story-heading {
-  font-size: 17px; font-weight: 600; color: var(--text);
-  letter-spacing: -0.4px; margin-bottom: 16px;
+/* ── Story — 움직이는 신문 ─────────────────── */
+.story-wrap {
+  padding: 16px 16px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
-.story-player {
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+
+.newspaper {
+  display: grid;
+  grid-template-rows: auto 1fr auto 1fr;
+  min-height: 560px;
+  height: calc(100dvh - 190px);
+  background: #f4ede0;
   overflow: hidden;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  font-family: 'Pretendard Variable', sans-serif;
 }
 
-/* 스테이지 */
-.story-stage {
-  position: relative; height: 420px;
-  background: #111; overflow: hidden;
+/* 마스트헤드 */
+.np-masthead {
+  padding: 8px 14px 6px;
+  border-bottom: 3px double #1a1a1a;
+  background: #f4ede0;
 }
-.story-slide {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  animation: kenBurns 4.2s ease-out forwards;
+.np-masthead-inner {
+  display: flex; align-items: baseline; justify-content: space-between;
 }
-@keyframes kenBurns {
-  from { transform: scale(1); }
-  to   { transform: scale(1.08); }
+.np-title {
+  font-size: 24px; font-weight: 900; color: #1a1a1a;
+  text-align: center; flex: 1; letter-spacing: -0.5px;
+  margin: 0;
 }
-.story-scrim-top {
-  position: absolute; top: 0; left: 0; right: 0; height: 100px;
-  background: linear-gradient(to bottom, rgba(0,0,0,.55), transparent);
-  z-index: 1;
+.np-edition, .np-date {
+  font-size: 9px; color: #666; min-width: 50px;
 }
-.story-scrim-bot {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 220px;
-  background: linear-gradient(to top, rgba(0,0,0,.75), transparent);
-  z-index: 1;
+.np-date { text-align: right; }
+
+/* 메인·서브 섹션 */
+.np-main { display: flex; overflow: hidden; }
+.np-sub  { display: flex; overflow: hidden; }
+
+/* 영상 셀 */
+.np-vcell { overflow: hidden; }
+.np-vcell--1 { flex: 0 0 58%; border-right: 1px solid #999; }
+.np-vcell--2 { flex: 0 0 42%; }
+
+/* 텍스트 셀 */
+.np-tcell {
+  padding: 8px 12px;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
-.story-weather-badge {
-  position: absolute; top: 14px; right: 14px;
-  background: rgba(0,0,0,.38); backdrop-filter: blur(8px);
-  color: white; padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 12px; font-weight: 500;
-  z-index: 2;
-}
-.story-bottom-info {
-  position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 2;
-}
-.story-meta-line { font-size: 11px; color: rgba(255,255,255,.75); margin-bottom: 6px; }
-.story-record-text {
-  font-size: 15px; font-weight: 500; color: #fff;
-  line-height: 1.55; letter-spacing: -0.2px; margin-bottom: 8px;
-}
-.story-tags-row { display: flex; flex-wrap: wrap; gap: 4px; }
-.story-tag {
-  font-size: 11px; color: rgba(255,255,255,.8);
-  background: rgba(255,255,255,.15);
-  border-radius: var(--radius-pill); padding: 2px 8px;
-}
-.story-tap-left, .story-tap-right {
-  position: absolute; top: 0; bottom: 0; width: 38%; z-index: 3;
-}
-.story-tap-left  { left: 0; }
-.story-tap-right { right: 0; }
-.story-empty-state {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,.4); font-size: 15px; background: #1a1a1a;
+.np-tcell::-webkit-scrollbar { display: none; }
+.np-tcell--1 { flex: 1; }
+.np-tcell--2 { flex: 1; border-right: 1px solid #999; }
+
+/* 영상 */
+.np-video {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  filter: sepia(12%);
 }
 
-/* 슬라이드 트랜지션 */
-.sf-enter-active { animation: sfIn .45s ease; }
-.sf-leave-active { animation: sfOut .3s ease; }
-@keyframes sfIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes sfOut { to   { opacity: 0; } }
+/* 중간 구분선 */
+.np-h-rule { height: 3px; background: #1a1a1a; margin: 0 14px; flex-shrink: 0; }
 
-/* 컨트롤 바 */
-.story-ctrl-bar { background: var(--bg); padding: 10px 14px 0; }
-.story-segs { display: flex; gap: 3px; margin-bottom: 8px; }
-.story-seg-track {
-  flex: 1; height: 2px; background: var(--border);
-  border-radius: 2px; overflow: hidden;
+/* 텍스트 요소 */
+.np-rule { height: 1px; background: #1a1a1a; margin: 4px 0; flex-shrink: 0; }
+.np-headline {
+  font-size: 15px; font-weight: 800; color: #1a1a1a;
+  line-height: 1.25; margin: 0 0 4px;
 }
-.story-seg-fill {
-  height: 100%; background: var(--accent);
-  border-radius: 2px; transition: width .08s linear;
-}
-.story-btns { display: flex; align-items: center; gap: 4px; padding-bottom: 8px; }
-.s-btn {
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius); color: var(--text);
-  background: none; border: none; cursor: pointer;
-}
-.s-btn:active { background: var(--accent-light); }
-.s-play {
-  width: 40px; height: 40px;
-  background: var(--accent); color: white; border-radius: 50%;
-}
-.s-play:active { background: var(--accent-hover); }
-.s-counter {
-  margin-left: auto;
-  font-size: 12px; font-weight: 500; color: var(--text-sub);
+.np-headline--sm { font-size: 13px; }
+.np-byline { font-size: 9px; color: #777; margin-bottom: 5px; flex-shrink: 0; }
+.np-body {
+  font-size: 11.5px; color: #1a1a1a;
+  line-height: 1.75;
+  word-break: keep-all;
 }
 
-/* 필름스트립 */
-.story-filmstrip {
-  display: flex; gap: 6px; overflow-x: auto;
-  padding: 8px 14px 12px; background: var(--bg);
-}
-.story-filmstrip::-webkit-scrollbar { display: none; }
-.film-cell {
-  flex-shrink: 0; width: 52px; height: 52px;
-  border-radius: var(--radius); overflow: hidden;
-  border: 2px solid transparent; cursor: pointer;
-  transition: border-color .15s;
-}
-.film-cell.active { border-color: var(--accent); }
-.film-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.film-ph  { width: 100%; height: 100%; }
+/* 커서 깜박임 */
+.np-cursor { animation: np-blink 0.7s step-end infinite; }
+@keyframes np-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
 /* ── Photo Book ───────────────────────────── */
 .pb-wrap { padding-bottom: 40px; }

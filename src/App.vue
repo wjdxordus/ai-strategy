@@ -26,7 +26,7 @@
 <script>
 import GNB from './components/GNB.vue'
 import ShareSheet from './components/ShareSheet.vue'
-import { store, processPhotoGroups, loadMemoryRecords } from './store'
+import { store, loadMemoryRecords } from './store'
 
 export default {
   name: 'App',
@@ -63,26 +63,29 @@ export default {
     })
 
     // Android → Web 브릿지 설정
+    // 사진 데이터는 store.pendingPhotoData에 저장, ProcessingDemoView에서 소비
     window._pendingBridgeData = null
     window.DailyLogBridge = {
       onPhotosReady: (jsonStr) => {
         try {
           const parsed = JSON.parse(jsonStr)
 
-          // 새 포맷: { userInfo, photoGroups, date }
           if (parsed && parsed.photoGroups) {
-            const { userInfo, photoGroups, date } = parsed
-            store.userInfo = userInfo || store.userInfo
-            store.photoGroups = photoGroups
+            store.userInfo = parsed.userInfo || store.userInfo
+            store.photoGroups = parsed.photoGroups
             store.isAndroidDataLoaded = true
-            store.bridgeDate = date || new Date().toISOString().slice(0, 10)
-            processPhotoGroups(photoGroups, store.userInfo, store.bridgeDate)
+            store.bridgeDate = parsed.date || new Date().toISOString().slice(0, 10)
+            // ProcessingDemoView 워처가 감지해서 실제 처리 시작
+            store.pendingPhotoData = parsed
 
-          // 구 포맷: 배열
           } else if (Array.isArray(parsed)) {
             store.photoGroups = parsed
             store.isAndroidDataLoaded = true
-            processPhotoGroups(parsed, store.userInfo, store.bridgeDate)
+            store.pendingPhotoData = {
+              photoGroups: parsed,
+              userInfo: store.userInfo,
+              date: store.bridgeDate,
+            }
           }
         } catch (e) {
           console.error('[Bridge] 파싱 오류:', e)

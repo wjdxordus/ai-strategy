@@ -812,6 +812,9 @@ export const store = Vue.observable({
 
   // 웹 스플래시 표시 여부
   showWebSplash: false,
+
+  // Android 브릿지로 받은 사진 데이터 (ProcessingDemoView에서 소비)
+  pendingPhotoData: null,
 })
 
 /**
@@ -891,6 +894,26 @@ export async function processPhotoGroups(photoGroups, userInfo, date) {
     store.records = [...records, ...existing].sort((a, b) => (a.date < b.date ? 1 : -1))
   } catch (e) {
     console.warn('기록 저장 실패:', e)
+  }
+}
+
+/**
+ * ProcessingDemoView에서 처리 완료 후 호출 — 기록을 store/localStorage에 저장
+ */
+export function saveProcessedRecords(records, date) {
+  store.todayRecords = records
+  store.processingStatus = 'done'
+
+  try {
+    const stripped = records.map(r => {
+      const { thumbnail, ...rest } = r
+      return rest
+    })
+    localStorage.setItem(`records_${date}`, JSON.stringify(stripped))
+    const existing = store.records.filter(r => r.date !== date)
+    store.records = [...records, ...existing].sort((a, b) => (a.date < b.date ? 1 : -1))
+  } catch (e) {
+    console.warn('[store] 기록 저장 실패:', e)
   }
 }
 

@@ -77,7 +77,7 @@
         <!-- 완료 시 미니 기록 카드 -->
         <transition name="result-slide">
           <div v-if="g.stage === 'done'" class="pd-result">
-            <div class="pd-result-thumb" :style="{ backgroundImage: 'url(' + g.photos[g.bestCutIndex].src + ')' }" />
+            <div class="pd-result-thumb" :style="resultThumbStyle(g)" />
             <div class="pd-result-body">
               <p class="pd-result-meta">{{ g.weather }}&nbsp;&nbsp;{{ g.location }}</p>
               <p class="pd-result-text">{{ g.aiRecord }}</p>
@@ -102,6 +102,12 @@
 </template>
 
 <script>
+import { store, saveProcessedRecords } from '../store'
+import { fetchWeather } from '../services/weather'
+import { uploadFile, analyzePhoto, parseBestCutIndex } from '../services/dify'
+import { CONFIG } from '../config'
+
+// ─── 데모 데이터 ────────────────────────────────────────────────────────────
 const DEMO_GROUPS = [
   {
     location: '성동구 옥수동',
@@ -150,28 +156,36 @@ const DEMO_GROUPS = [
   },
 ]
 
-const UPLOAD_PER_PHOTO = 480   // ms per photo
-const SELECT_DURATION  = 1400  // ms
-const GEN_DURATION     = 2600  // ms
-const TICK_MS          = 40    // progress bar update interval
+const UPLOAD_PER_PHOTO = 480
+const SELECT_DURATION  = 1400
+const GEN_DURATION     = 2600
+const TICK_MS          = 40
 
 export default {
   name: 'ProcessingDemoView',
+
   data() {
     return {
+      store,
+      isRealMode: false,
+      date: new Date().toISOString().slice(0, 10),
+      userInfo: null,
       groups: DEMO_GROUPS.map(g => ({
         ...g,
-        stage: 'waiting',    // waiting | uploading | selecting | generating | done
+        stage: 'waiting',
         uploadedCount: 0,
         selectPct: 0,
         genPct: 0,
       })),
     }
   },
+
   created() {
-    // Vue 2 does not proxy _-prefixed data properties — keep timers outside reactive system
     this._timers = []
+    this._bridgeTimeout = null
+    this._cancelled = false
   },
+
   computed: {
     groupPct() {
       return (g) => {
@@ -179,55 +193,82 @@ export default {
           case 'waiting':    return 0
           case 'uploading':  return (g.uploadedCount / g.photos.length) * 34
           case 'selecting':  return 34 + g.selectPct * 0.26
-          case 'generating': return 60 + g.genPct  * 0.4
+          case 'generating': return 60 + g.genPct * 0.4
           case 'done':       return 100
           default:           return 0
         }
       }
     },
     overallPct() {
+      if (!this.groups.length) return 0
       const sum = this.groups.reduce((acc, g) => acc + this.groupPct(g), 0)
       return sum / this.groups.length
     },
     allDone() {
-      return this.groups.every(g => g.stage === 'done')
+      return this.groups.length > 0 && this.groups.every(g => g.stage === 'done')
     },
   },
-  mounted() {
-    this.groups.forEach((_, gi) => {
-      const t = setTimeout(() => this.startGroup(gi), DEMO_GROUPS[gi].delay)
-      this._timers.push(t)
-    })
+
+  watch: {
+    // Android 브릿지 데이터 도착 시 실제 모드 전환
+    'store.pendingPhotoData'(data) {
+      if (data && !this.isRealMode) {
+        clearTimeout(this._bridgeTimeout)
+        this.startRealMode(data)
+      }
+    },
   },
+
+  mounted() {
+    if (store.pendingPhotoData) {
+      this.startRealMode(store.pendingPhotoData)
+    } else {
+      // 2초 대기 후 데모 모드로 fallback
+      this._bridgeTimeout = setTimeout(() => {
+        if (!this.isRealMode) this.startDemoMode()
+      }, 2000)
+    }
+  },
+
   beforeDestroy() {
+    this._cancelled = true
     this._timers.forEach(clearTimeout)
     this._timers = []
+    clearTimeout(this._bridgeTimeout)
   },
+
   methods: {
-    /* ─── 처리 시뮬레이션 ─── */
-    startGroup(gi) {
+    // ─── 데모 시뮬레이션 ──────────────────────────────────────────────────────
+
+    startDemoMode() {
+      this.groups.forEach((_, gi) => {
+        const delay = DEMO_GROUPS[gi].delay || 0
+        const t = setTimeout(() => this.startDemoGroup(gi), delay)
+        this._timers.push(t)
+      })
+    },
+
+    startDemoGroup(gi) {
       const g = this.groups[gi]
       g.stage = 'uploading'
       g.uploadedCount = 0
-      this.uploadNext(gi)
+      this.demoUploadNext(gi)
     },
 
-    uploadNext(gi) {
+    demoUploadNext(gi) {
       const g = this.groups[gi]
-      if (g.uploadedCount < g.photos.length) {
-        const t = setTimeout(() => {
-          g.uploadedCount++
-          if (g.uploadedCount < g.photos.length) {
-            this.uploadNext(gi)
-          } else {
-            this.startSelecting(gi)
-          }
-        }, UPLOAD_PER_PHOTO)
-        this._timers.push(t)
-      }
+      const t = setTimeout(() => {
+        g.uploadedCount++
+        if (g.uploadedCount < g.photos.length) {
+          this.demoUploadNext(gi)
+        } else {
+          this.demoStartSelecting(gi)
+        }
+      }, UPLOAD_PER_PHOTO)
+      this._timers.push(t)
     },
 
-    startSelecting(gi) {
+    demoStartSelecting(gi) {
       const g = this.groups[gi]
       g.stage = 'selecting'
       g.selectPct = 0
@@ -236,13 +277,13 @@ export default {
         g.selectPct = Math.min(100, ((Date.now() - start) / SELECT_DURATION) * 100)
         if (g.selectPct >= 100) {
           clearInterval(tick)
-          this.startGenerating(gi)
+          this.demoStartGenerating(gi)
         }
       }, TICK_MS)
       this._timers.push(tick)
     },
 
-    startGenerating(gi) {
+    demoStartGenerating(gi) {
       const g = this.groups[gi]
       g.stage = 'generating'
       g.genPct = 0
@@ -257,17 +298,240 @@ export default {
       this._timers.push(tick)
     },
 
-    /* ─── 헬퍼 ─── */
+    // ─── 실제 API 처리 모드 ───────────────────────────────────────────────────
+
+    startRealMode(pendingData) {
+      this.isRealMode = true
+      store.pendingPhotoData = null  // 소비 후 클리어
+
+      this.date = pendingData.date || new Date().toISOString().slice(0, 10)
+      this.userInfo = pendingData.userInfo || {}
+
+      const photoGroups = pendingData.photoGroups || []
+
+      // 실제 데이터로 groups 교체 (모든 mutable 프로퍼티를 upfront 정의 — Vue 2 reactivity 보장)
+      this.groups = photoGroups.map(g => ({
+        location: g.locationLabel || g.location || '알 수 없는 위치',
+        lat: g.centerLat || g.lat || 0,
+        lng: g.centerLng || g.lng || 0,
+        timestamp: g.startTime || g.photos?.[0]?.timestamp || Date.now(),
+        photos: (g.photos || []).map(p => ({
+          src: p.thumbnail,
+          thumbnail: p.thumbnail,
+          ts: p.timestamp,
+        })),
+        stage: 'waiting',
+        uploadedCount: 0,
+        selectPct: 0,
+        genPct: 0,
+        bestCutIndex: -1,
+        weather: '🌡️ 로딩 중',
+        aiRecord: '',
+        tags: [],
+        _result: null,
+      }))
+
+      // 300ms 간격으로 그룹 순차 시작 (API 과부하 방지)
+      this.groups.forEach((_, gi) => {
+        const t = setTimeout(() => this.startRealGroup(gi), gi * 300)
+        this._timers.push(t)
+      })
+    },
+
+    async startRealGroup(gi) {
+      if (this._cancelled) return
+      const g = this.groups[gi]
+      if (!g || !g.photos || g.photos.length === 0) {
+        g.stage = 'done'
+        this.checkAllDone()
+        return
+      }
+
+      // 1. 날씨 조회
+      let weatherObj = { emoji: '🌡️', label: '알 수 없음' }
+      try {
+        weatherObj = await fetchWeather(g.lat, g.lng, g.timestamp)
+      } catch (e) {
+        console.warn('[ProcessingDemo] 날씨 조회 실패:', e)
+      }
+      if (this._cancelled) return
+      g.weather = `${weatherObj.emoji} ${weatherObj.label}`
+
+      // 2. 사진 순차 업로드 (업로드 카운터 표시용)
+      g.stage = 'uploading'
+      g.uploadedCount = 0
+      const uploadFileIds = []
+
+      for (let pi = 0; pi < g.photos.length; pi++) {
+        if (this._cancelled) return
+        try {
+          const id = await uploadFile(
+            g.photos[pi].thumbnail,
+            `photo_${pi + 1}.jpg`,
+            'golden-multi-file'
+          )
+          uploadFileIds.push(id)
+        } catch (e) {
+          console.warn(`[ProcessingDemo] 사진 ${pi + 1} 업로드 실패:`, e)
+          uploadFileIds.push(null)
+        }
+        g.uploadedCount = pi + 1
+      }
+
+      const validIds = uploadFileIds.filter(Boolean)
+      if (validIds.length === 0) {
+        this.finishWithFallback(g, weatherObj)
+        return
+      }
+
+      // 3. 베스트컷 선정 (API 응답 대기 중 프로그레스 애니메이션)
+      g.stage = 'selecting'
+      g.selectPct = 0
+      const selectAnim = this.animatePct(g, 'selectPct', 2500)
+
+      let bestCutIndex = 0
+      try {
+        const res = await fetch(`${CONFIG.DIFY_BASE_URL}/workflows/run`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${CONFIG.DIFY_BESTCUT_WORKFLOW_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: {
+              images: validIds.map(id => ({
+                transfer_method: 'local_file',
+                upload_file_id: id,
+                type: 'image',
+              })),
+            },
+            query: '',
+            response_mode: 'blocking',
+            user: 'golden-12345',
+          }),
+        })
+        if (res.ok) {
+          const raw = await res.json()
+          bestCutIndex = parseBestCutIndex(raw, g.photos.length)
+        }
+      } catch (e) {
+        console.warn('[ProcessingDemo] 베스트컷 선정 실패:', e)
+      }
+
+      if (this._cancelled) { selectAnim.stop(); return }
+      selectAnim.stop()
+      g.selectPct = 100
+      g.bestCutIndex = bestCutIndex
+
+      // 4. 기록 생성
+      g.stage = 'generating'
+      g.genPct = 0
+      const genAnim = this.animatePct(g, 'genPct', 3000)
+
+      let aiRecord = `${g.location}에서의 소중한 순간입니다.`
+      let categoryTags = [g.location.split(' ')[0]].filter(Boolean)
+      let emotionTags = [{ icon: '📍', label: '기록' }]
+
+      try {
+        const selectedId = uploadFileIds[bestCutIndex] || validIds[0]
+        const generated = await analyzePhoto(selectedId, g.location, weatherObj)
+        if (generated.aiRecord) aiRecord = generated.aiRecord
+        if (generated.categoryTags) categoryTags = generated.categoryTags
+        if (generated.emotionTags) emotionTags = generated.emotionTags
+      } catch (e) {
+        console.warn('[ProcessingDemo] 기록 생성 실패:', e)
+      }
+
+      if (this._cancelled) { genAnim.stop(); return }
+      genAnim.stop()
+      g.genPct = 100
+      g.aiRecord = aiRecord
+      g.tags = categoryTags
+      g._result = {
+        thumbnail: g.photos[bestCutIndex]?.thumbnail || g.photos[0]?.thumbnail,
+        aiRecord,
+        categoryTags,
+        emotionTags,
+        weather: weatherObj,
+      }
+      g.stage = 'done'
+
+      this.checkAllDone()
+    },
+
+    finishWithFallback(g, weatherObj) {
+      const loc0 = (g.location || '').split(' ')[0]
+      g.aiRecord = `${g.location}에서의 소중한 순간입니다.`
+      g.tags = [loc0].filter(Boolean)
+      g._result = {
+        thumbnail: g.photos[0]?.thumbnail || null,
+        aiRecord: g.aiRecord,
+        categoryTags: g.tags,
+        emotionTags: [{ icon: '📍', label: '기록' }],
+        weather: weatherObj,
+      }
+      g.stage = 'done'
+      this.checkAllDone()
+    },
+
+    checkAllDone() {
+      if (!this.isRealMode) return
+      if (this.groups.every(gr => gr.stage === 'done')) {
+        this.saveAndFinish()
+      }
+    },
+
+    saveAndFinish() {
+      const records = this.groups.map((g, gi) => {
+        const r = g._result || {}
+        const d = new Date(g.timestamp)
+        return {
+          id: `today_${this.date}_${gi}`,
+          date: this.date,
+          time: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`,
+          location: g.location,
+          lat: g.lat,
+          lng: g.lng,
+          thumbnail: r.thumbnail || null,
+          gradient: null,
+          weather: r.weather || { emoji: '🌡️', label: '알 수 없음' },
+          aiRecord: r.aiRecord || '',
+          emotionTags: r.emotionTags || [],
+          categoryTags: r.categoryTags || [],
+          userNote: '',
+        }
+      })
+      saveProcessedRecords(records, this.date)
+    },
+
+    // ─── 공통 헬퍼 ────────────────────────────────────────────────────────────
+
+    animatePct(g, key, duration) {
+      const start = Date.now()
+      let stopped = false
+      const id = setInterval(() => {
+        if (stopped) return
+        g[key] = Math.min(95, ((Date.now() - start) / duration) * 100)
+      }, TICK_MS)
+      this._timers.push(id)
+      return { stop() { stopped = true; clearInterval(id) } }
+    },
+
     isBest(g, pi) {
-      return g.bestCutIndex === pi &&
-        ['selecting', 'generating', 'done'].includes(g.stage)
+      if (g.bestCutIndex < 0) return false
+      return g.bestCutIndex === pi && ['selecting', 'generating', 'done'].includes(g.stage)
     },
     isDim(g, pi) {
-      return g.bestCutIndex !== pi &&
-        ['selecting', 'generating', 'done'].includes(g.stage)
+      if (g.bestCutIndex < 0) return false
+      return g.bestCutIndex !== pi && ['selecting', 'generating', 'done'].includes(g.stage)
     },
     isPending(g, pi) {
       return g.stage === 'uploading' && pi >= g.uploadedCount
+    },
+    resultThumbStyle(g) {
+      const idx = g.bestCutIndex >= 0 ? g.bestCutIndex : 0
+      const src = g.photos[idx]?.src
+      return src ? { backgroundImage: 'url(' + src + ')' } : {}
     },
 
     stageText(stage) {
@@ -282,18 +546,12 @@ export default {
 
     groupLabel(g) {
       switch (g.stage) {
-        case 'waiting':
-          return '처리 대기 중'
-        case 'uploading':
-          return `사진 업로드 ${g.uploadedCount} / ${g.photos.length}`
-        case 'selecting':
-          return '베스트컷 선정 중...'
-        case 'generating':
-          return 'AI 기록 생성 중...'
-        case 'done':
-          return '기록 생성 완료'
-        default:
-          return ''
+        case 'waiting':    return '처리 대기 중'
+        case 'uploading':  return `사진 업로드 ${g.uploadedCount} / ${g.photos.length}`
+        case 'selecting':  return '베스트컷 선정 중...'
+        case 'generating': return 'AI 기록 생성 중...'
+        case 'done':       return '기록 생성 완료'
+        default:           return ''
       }
     },
   },

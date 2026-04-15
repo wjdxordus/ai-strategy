@@ -486,14 +486,8 @@ export default {
     },
     calendarMonths() {
       const now = new Date()
-      // 기본 12개월 전부터 표시, 더 오래된 기록이 있으면 그 월까지 확장
-      let ey = now.getFullYear(), em = now.getMonth() + 1 - 11
-      while (em < 1) { em += 12; ey-- }
-      if (store.records.length) {
-        const dates = store.records.map(r => r.date).sort()
-        const [ry, rm] = dates[0].split('-').map(Number)
-        if (ry < ey || (ry === ey && rm < em)) { ey = ry; em = rm }
-      }
+      // 2026년 2월 ~ 이번 달까지 고정
+      const ey = 2026, em = 2
       const months = []
       let y = now.getFullYear(), m = now.getMonth() + 1
       while (y > ey || (y === ey && m >= em)) {

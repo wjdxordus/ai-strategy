@@ -275,7 +275,7 @@ export async function processGroupForRecord(photos, location, weather) {
  * 베스트컷 워크플로우 응답에서 선정된 사진 인덱스(0-based) 파싱
  * 워크플로우 응답 형식에 따라 다양한 경우를 처리
  */
-function parseBestCutIndex(raw, total) {
+export function parseBestCutIndex(raw, total) {
   try {
     const response = raw?.data?.outputs?.response
     if (response == null) return 0
