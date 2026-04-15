@@ -314,11 +314,11 @@
 
       <!-- 기록 카드 목록 -->
       <div class="moment-cards-list">
-        <div v-if="!allRecords.length" class="moment-empty">
+        <div v-if="!momentTrackRecords.length" class="moment-empty">
           <p class="moment-empty-text">기록이 없어요</p>
         </div>
         <div
-          v-for="r in allRecords"
+          v-for="r in momentTrackRecords"
           :key="r.id"
           class="moment-card-outer"
           :class="{ 'is-active': activeMarkerId === r.id }"
@@ -465,6 +465,19 @@ export default {
     },
     allRecords() {
       return [...store.records].sort((a, b) => a.date > b.date ? -1 : 1)
+    },
+    // 모먼트 트랙 카드 정렬: 사진 수 많은 지역 → 지역 내 최근 날짜 순
+    momentTrackRecords() {
+      const records = [...store.records]
+      const locationMap = {}
+      for (const r of records) {
+        const key = r.location || '알 수 없는 위치'
+        if (!locationMap[key]) locationMap[key] = []
+        locationMap[key].push(r)
+      }
+      return Object.entries(locationMap)
+        .sort((a, b) => b[1].length - a[1].length)
+        .flatMap(([, group]) => group.sort((a, b) => a.date > b.date ? -1 : 1))
     },
     allDates() {
       return [...new Set(this.allRecords.map(r => r.date))].sort((a, b) => a > b ? -1 : 1)

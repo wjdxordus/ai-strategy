@@ -18,8 +18,14 @@
       <span class="pd-overall-pct">{{ Math.round(overallPct) }}%</span>
     </div>
 
+    <!-- ─── 데이터 대기 중 스피너 ─── -->
+    <div v-if="!groups.length" class="pd-waiting">
+      <div class="pd-waiting-spinner" />
+      <p class="pd-waiting-text">사진 불러오는 중...</p>
+    </div>
+
     <!-- ─── 그룹 카드 ────────────────────────────── -->
-    <div class="pd-groups">
+    <div v-else class="pd-groups">
       <div
         v-for="(g, gi) in groups"
         :key="gi"
@@ -271,13 +277,7 @@ export default {
       isRealMode: false,
       date: new Date().toISOString().slice(0, 10),
       userInfo: null,
-      groups: DEMO_GROUPS.map(g => ({
-        ...g,
-        stage: 'waiting',
-        uploadedCount: 0,
-        selectPct: 0,
-        genPct: 0,
-      })),
+      groups: [],   // 실제 데이터 or 데모 fallback 시점에 채워짐
     }
   },
 
@@ -285,6 +285,14 @@ export default {
     this._timers = []
     this._bridgeTimeout = null
     this._cancelled = false
+    // Vue 2는 _ 접두사 프로퍼티를 reactive 제외 → created()에서 인스턴스 직접 할당
+    this._demoGroups = DEMO_GROUPS.map(g => ({
+      ...g,
+      stage: 'waiting',
+      uploadedCount: 0,
+      selectPct: 0,
+      genPct: 0,
+    }))
   },
 
   computed: {
@@ -342,8 +350,10 @@ export default {
     // ─── 데모 시뮬레이션 ──────────────────────────────────────────────────────
 
     startDemoMode() {
+      // 데모 그룹을 이 시점에 채워서 대기 중 빈 화면 방지
+      this.groups = this._demoGroups
       this.groups.forEach((_, gi) => {
-        const delay = DEMO_GROUPS[gi].delay || 0
+        const delay = this._demoGroups[gi].delay || 0
         const t = setTimeout(() => this.startDemoGroup(gi), delay)
         this._timers.push(t)
       })
@@ -674,6 +684,22 @@ export default {
   min-height: 100%;
   padding: 0 0 20px;
 }
+
+/* ─── 대기 스피너 ─── */
+.pd-waiting {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 14px;
+  padding: 60px 0;
+}
+.pd-waiting-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: pdSpin 0.8s linear infinite;
+}
+@keyframes pdSpin { to { transform: rotate(360deg); } }
+.pd-waiting-text { font-size: 14px; color: var(--text-sub); letter-spacing: -0.2px; }
 
 /* ─── 헤더 ─── */
 .pd-header {
