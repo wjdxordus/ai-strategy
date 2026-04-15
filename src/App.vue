@@ -12,7 +12,7 @@
     </transition>
 
     <router-view class="page-view" />
-    <GNB />
+    <GNB v-if="!$route.meta.hideGNB" />
 
     <!-- 공유 시트: page-view 바깥에서 렌더링 -->
     <ShareSheet
