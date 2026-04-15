@@ -484,8 +484,7 @@ export default {
 /* ─── 입력 영역 ─── */
 .chat-input-wrap {
   padding: 10px 16px;
-  /* GNB 높이(58px) + safe area + 여유 */
-  padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px) + 10px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   border-top: 1px solid var(--border);
   background: var(--bg);
   flex-shrink: 0;
