@@ -200,7 +200,7 @@ export default {
     })
   },
   beforeDestroy() {
-    this._timers.forEach(t => clearTimeout(t))
+    this._timers.forEach(clearTimeout)
     this._timers = []
   },
   methods: {
