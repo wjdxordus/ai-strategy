@@ -43,7 +43,7 @@
         <!-- 감정 태그 -->
         <div v-if="record.emotionTags && record.emotionTags.length" class="tag-row">
           <span v-for="tag in record.emotionTags" :key="tag.label" class="tag tag-emotion">
-            {{ tag.icon }}&thinsp;{{ tag.label }}
+            #{{ tag.label }}
           </span>
         </div>
 

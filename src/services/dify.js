@@ -105,7 +105,7 @@ export async function analyzePhoto(uploadFileId, location, weather) {
     aiRecord: response.dailyLog || '',
     categoryTags: Array.isArray(response.category) ? response.category : [],
     emotionTags: response.emotion
-      ? [{ icon: '💫', label: response.emotion }]
+      ? String(response.emotion).split(',').map(s => s.trim()).filter(Boolean).map(label => ({ icon: '', label }))
       : [],
   }
 }
