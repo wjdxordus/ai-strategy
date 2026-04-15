@@ -426,7 +426,22 @@ export default {
       _scrollHandler: null,
     }
   },
+  mounted() {
+    const date = this.$route.query.date
+    if (date) {
+      this.mainTab = 'record_archive'
+      this.viewMode = 'calendar'
+      this.selectedDate = date
+    }
+  },
   watch: {
+    '$route.query.date'(date) {
+      if (date) {
+        this.mainTab = 'record_archive'
+        this.viewMode = 'calendar'
+        this.selectedDate = date
+      }
+    },
     mainTab(val) {
       if (val === 'moment_track') {
         this.$nextTick(() => this.initMomentTrack())

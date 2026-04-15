@@ -49,7 +49,7 @@
 
         <!-- 기본 뷰일 때: AI 검색 버튼 + 검색창 -->
         <template v-else>
-          <button class="btn-ai" @click="showMindMap = true">
+          <button class="btn-ai" @click="showChatBot = true">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -210,9 +210,9 @@
       <div style="height: 80px" />
     </template>
 
-    <!-- 태그 마이닝맵 오버레이 -->
-    <transition name="mindmap-fade">
-      <tag-mind-map v-if="showMindMap" @close="showMindMap = false" />
+    <!-- AI 챗봇 오버레이 -->
+    <transition name="chatbot-slide">
+      <ai-chat-bot v-if="showChatBot" @close="showChatBot = false" />
     </transition>
 
   </div>
@@ -220,17 +220,17 @@
 
 <script>
 import { store } from '../store'
-import TagMindMap from '../components/TagMindMap.vue'
+import AiChatBot from '../components/AiChatBot.vue'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default {
   name: 'MyView',
-  components: { TagMindMap },
+  components: { AiChatBot },
   data() {
     return {
       activeTab: 'tag_album',
-      showMindMap: false,
+      showChatBot: false,
       searchQuery: '',
       confirmedQuery: '',
       resultGroupByDate: false,
@@ -586,8 +586,8 @@ export default {
   border-radius: var(--radius); padding: 4px 10px;
 }
 
-/* ─── 마이닝맵 트랜지션 ────────────────────── */
-.mindmap-fade-enter-active,
-.mindmap-fade-leave-active { transition: opacity 0.28s ease; }
-.mindmap-fade-enter, .mindmap-fade-leave-to { opacity: 0; }
+/* ─── 챗봇 트랜지션 ─────────────────────────── */
+.chatbot-slide-enter-active,
+.chatbot-slide-leave-active { transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s; }
+.chatbot-slide-enter, .chatbot-slide-leave-to { transform: translateY(100%); opacity: 0; }
 </style>
