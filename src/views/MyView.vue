@@ -238,6 +238,11 @@ export default {
       uploadedFiles: [],
       toneOptions: [
         {
+          key: 'custom',
+          label: '나만의 톤으로',
+          example: '',
+        },
+        {
           key: 'emotional',
           label: '감성적으로',
           example: '"벚꽃송이 노을, 오래 남을 것 같은 저녁"',
@@ -251,12 +256,7 @@ export default {
           key: 'diary',
           label: '제목일기처럼',
           example: '[제목: 벚꽃 거들 뿐]\n인생샷 건지려다 잇몸 만개한 사진만 99장 남음. 꽃구경 핑계고 결국 우리의 수다가 본체였던 완벽한 봄날의 기록.',
-        },
-        {
-          key: 'custom',
-          label: '나만의 톤으로',
-          example: '',
-        },
+        }
       ],
     }
   },

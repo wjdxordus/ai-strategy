@@ -24,14 +24,14 @@
       <div class="tb-main-tabs">
         <button
           class="tb-main-tab"
-          :class="{ active: mainTab === 'record_archive' }"
-          @click="setMainTab('record_archive')"
-        >기록함</button>
-        <button
-          class="tb-main-tab"
           :class="{ active: mainTab === 'moment_track' }"
           @click="setMainTab('moment_track')"
         >모먼트 트랙</button>
+        <button
+          class="tb-main-tab"
+          :class="{ active: mainTab === 'record_archive' }"
+          @click="setMainTab('record_archive')"
+        >기록함</button>
       </div>
 
       <!-- 서브 행 (Record Archive 전용) -->
@@ -410,7 +410,7 @@ export default {
   data() {
     return {
       store,
-      mainTab: 'record_archive',
+      mainTab: 'moment_track',
       viewMode: 'calendar',
       selectedDate: null,
       // 날짜 피커
@@ -432,6 +432,9 @@ export default {
       this.mainTab = 'record_archive'
       this.viewMode = 'calendar'
       this.selectedDate = date
+    } else if (this.mainTab === 'moment_track') {
+      // 초기값이 moment_track이면 watch가 발동하지 않으므로 직접 초기화
+      this.$nextTick(() => this.initMomentTrack())
     }
   },
   watch: {
