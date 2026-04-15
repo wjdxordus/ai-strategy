@@ -208,7 +208,7 @@ export default {
 .section-desc {
   font-size: 14px; font-weight: 400; color: var(--text-sub);
   letter-spacing: -0.16px; line-height: 1.50;
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 1spx;
 }
 .section-desc-logo {
   height: 30px; width: auto;
