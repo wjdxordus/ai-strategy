@@ -3,12 +3,24 @@ import { CONFIG } from '../config'
 // ─── 파일 업로드 ──────────────────────────────────────────────────────────────
 
 /**
- * base64 data URL → Blob 변환
+ * base64 → Blob 변환
+ * - data URL 형식: "data:image/jpeg;base64,/9j/..."
+ * - raw base64 형식: "/9j/..."  (Android PhotoHelper 출력)
  */
-function base64ToBlob(dataUrl) {
-  const [header, data] = dataUrl.split(',')
-  const mime = header.match(/:(.*?);/)[1]
-  const binary = atob(data)
+function base64ToBlob(source) {
+  let mime = 'image/jpeg'
+  let base64Data = source
+
+  if (source.includes(',') && source.startsWith('data:')) {
+    // data URL 형식
+    const [header, data] = source.split(',')
+    const mimeMatch = header.match(/:(.*?);/)
+    if (mimeMatch) mime = mimeMatch[1]
+    base64Data = data
+  }
+  // else: raw base64 그대로 사용
+
+  const binary = atob(base64Data)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
   return new Blob([bytes], { type: mime })

@@ -62,39 +62,38 @@ export default {
       })
     })
 
-    // Android → Web 브릿지 설정
-    // 사진 데이터는 store.pendingPhotoData에 저장, ProcessingDemoView에서 소비
-    window._pendingBridgeData = null
-    window.DailyLogBridge = {
-      onPhotosReady: (jsonStr) => {
-        try {
-          const parsed = JSON.parse(jsonStr)
-
-          if (parsed && parsed.photoGroups) {
-            store.userInfo = parsed.userInfo || store.userInfo
-            store.photoGroups = parsed.photoGroups
-            store.isAndroidDataLoaded = true
-            store.bridgeDate = parsed.date || new Date().toISOString().slice(0, 10)
-            // ProcessingDemoView 워처가 감지해서 실제 처리 시작
-            store.pendingPhotoData = parsed
-
-          } else if (Array.isArray(parsed)) {
-            store.photoGroups = parsed
-            store.isAndroidDataLoaded = true
-            store.pendingPhotoData = {
-              photoGroups: parsed,
-              userInfo: store.userInfo,
-              date: store.bridgeDate,
-            }
+    // Android → Web 브릿지: main.js에서 선점 캡처된 핸들러를 실제 로직으로 교체
+    const handlePhotosReady = (jsonStr) => {
+      try {
+        const parsed = JSON.parse(jsonStr)
+        if (parsed && parsed.photoGroups) {
+          store.userInfo = parsed.userInfo || store.userInfo
+          store.photoGroups = parsed.photoGroups
+          store.isAndroidDataLoaded = true
+          store.bridgeDate = parsed.date || new Date().toISOString().slice(0, 10)
+          store.pendingPhotoData = parsed
+        } else if (Array.isArray(parsed)) {
+          store.photoGroups = parsed
+          store.isAndroidDataLoaded = true
+          store.pendingPhotoData = {
+            photoGroups: parsed,
+            userInfo: store.userInfo,
+            date: store.bridgeDate,
           }
-        } catch (e) {
-          console.error('[Bridge] 파싱 오류:', e)
         }
-      },
+      } catch (e) {
+        console.error('[Bridge] onPhotosReady 파싱 오류:', e)
+      }
     }
 
+    window.DailyLogBridge = {
+      onPhotosReady: handlePhotosReady,
+      onPhotoPicked: (jsonStr) => { window._pendingPickedData = jsonStr },
+    }
+
+    // mounted() 이전에 도착한 데이터 처리
     if (window._pendingBridgeData) {
-      window.DailyLogBridge.onPhotosReady(window._pendingBridgeData)
+      handlePhotosReady(window._pendingBridgeData)
       window._pendingBridgeData = null
     }
   },

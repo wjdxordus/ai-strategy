@@ -6,7 +6,7 @@
       <img src="/images/logo.png" class="pd-logo" alt="Golden Record" />
       <div class="pd-header-text">
         <p class="pd-title">{{ allDone ? '기록이 완성됐어요! 🎉' : '오늘의 기록을 만드는 중' }}</p>
-        <p class="pd-sub">{{ allDone ? groups.length + '개의 기록 카드가 생성됐어요' : '사진에서 베스트컷을 선정하고 기록을 작성하고 있어요' }}</p>
+        <p class="pd-sub">{{ allDone ? groups.length + '개의 기록 카드가 생성됐어요' : 'AI가 사진을 분석하고 기록을 작성하고 있어요' }}</p>
       </div>
     </div>
 
@@ -29,7 +29,7 @@
           'pd-card--done': g.stage === 'done',
         }"
       >
-        <!-- 카드 상단 -->
+        <!-- 카드 상단: 위치 + 상태 pill -->
         <div class="pd-card-top">
           <div class="pd-location">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -37,7 +37,38 @@
             </svg>
             <span>{{ g.location }}</span>
           </div>
-          <span class="pd-pill" :class="'pd-pill--' + g.stage">{{ stageText(g.stage) }}</span>
+          <span v-if="g.stage === 'waiting'" class="pd-pill pd-pill--waiting">대기 중</span>
+          <span v-if="g.stage === 'done'" class="pd-pill pd-pill--done">완료 ✓</span>
+        </div>
+
+        <!-- ─── 3단계 파이프라인 ─── -->
+        <div v-if="g.stage !== 'waiting'" class="pd-pipeline">
+          <div class="pd-pipe-step" :class="{ 'is-done': isPipeDone(g, 'upload'), 'is-active': g.stage === 'uploading' }">
+            <div class="pd-pipe-dot">
+              <svg v-if="isPipeDone(g, 'upload')" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span v-else-if="g.stage === 'uploading'" class="pd-pipe-pulse" />
+              <span v-else class="pd-pipe-num">1</span>
+            </div>
+            <span class="pd-pipe-label">업로드</span>
+          </div>
+          <div class="pd-pipe-line" :class="{ filled: isPipeDone(g, 'upload') }" />
+          <div class="pd-pipe-step" :class="{ 'is-done': isPipeDone(g, 'select'), 'is-active': g.stage === 'selecting' }">
+            <div class="pd-pipe-dot">
+              <svg v-if="isPipeDone(g, 'select')" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span v-else-if="g.stage === 'selecting'" class="pd-pipe-pulse" />
+              <span v-else class="pd-pipe-num">2</span>
+            </div>
+            <span class="pd-pipe-label">사진 선별</span>
+          </div>
+          <div class="pd-pipe-line" :class="{ filled: isPipeDone(g, 'select') }" />
+          <div class="pd-pipe-step" :class="{ 'is-done': isPipeDone(g, 'generate'), 'is-active': g.stage === 'generating' }">
+            <div class="pd-pipe-dot">
+              <svg v-if="isPipeDone(g, 'generate')" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span v-else-if="g.stage === 'generating'" class="pd-pipe-pulse" />
+              <span v-else class="pd-pipe-num">3</span>
+            </div>
+            <span class="pd-pipe-label">기록 작성</span>
+          </div>
         </div>
 
         <!-- 사진 스트립 -->
@@ -56,7 +87,6 @@
             <transition name="badge-pop">
               <div v-if="isBest(g, pi)" class="pd-best-badge">BEST</div>
             </transition>
-            <!-- 업로드 대기 오버레이 -->
             <div v-if="isPending(g, pi)" class="pd-pending-overlay">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
@@ -66,12 +96,83 @@
           </div>
         </div>
 
+        <!-- ─── AI 에이전트 섹션 ─── -->
+        <transition name="agent-fade" mode="out-in">
+
+          <!-- 업로드 -->
+          <div v-if="g.stage === 'uploading'" key="uploading" class="pd-agent">
+            <div class="pd-agent-icons">
+              <svg class="ag-icon ag-float-1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <div class="ag-center-wrap">
+                <svg class="ag-icon ag-icon--cloud" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+                </svg>
+              </div>
+              <svg class="ag-icon ag-float-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+            <p class="pd-agent-msg">사진을 AI에게 전달하는 중이에요.</p>
+            <p class="pd-agent-sub">{{ g.uploadedCount }} / {{ g.photos.length }}장 전송 완료</p>
+          </div>
+
+          <!-- 선별 -->
+          <div v-else-if="g.stage === 'selecting'" key="selecting" class="pd-agent">
+            <div class="pd-agent-icons">
+              <svg class="ag-icon ag-star ag-star-1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              <div class="ag-center-wrap">
+                <svg class="ag-icon ag-icon--eye" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <div class="ag-eye-ring" />
+              </div>
+              <svg class="ag-icon ag-star ag-star-2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <p class="pd-agent-msg">최고의 사진을 선별중이에요.</p>
+            <p class="pd-agent-sub">AI가 모든 사진을 분석하고 있어요</p>
+          </div>
+
+          <!-- 기록 생성 -->
+          <div v-else-if="g.stage === 'generating'" key="generating" class="pd-agent">
+            <div class="pd-agent-icons">
+              <svg class="ag-icon ag-spark ag-spark-1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+              </svg>
+              <div class="ag-center-wrap">
+                <svg class="ag-icon ag-icon--pen" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+              <svg class="ag-icon ag-spark ag-spark-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+                <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+              </svg>
+            </div>
+            <p class="pd-agent-msg">기록을 작성하고 있어요.</p>
+            <p class="pd-agent-sub">AI가 당신만의 기록을 만들고 있어요<span class="pd-cursor">|</span></p>
+          </div>
+
+        </transition>
+
         <!-- 그룹 진행바 -->
-        <div class="pd-group-bar-row">
+        <div v-if="g.stage !== 'waiting'" class="pd-group-bar-row">
           <div class="pd-group-bar">
             <div class="pd-group-fill" :style="{ width: groupPct(g) + '%' }" />
           </div>
-          <span class="pd-group-label">{{ groupLabel(g) }}</span>
+          <span class="pd-group-label">{{ Math.round(groupPct(g)) }}%</span>
         </div>
 
         <!-- 완료 시 미니 기록 카드 -->
@@ -157,7 +258,7 @@ const DEMO_GROUPS = [
 ]
 
 const UPLOAD_PER_PHOTO = 480
-const SELECT_DURATION  = 1400
+const SELECT_DURATION  = 4200
 const GEN_DURATION     = 2600
 const TICK_MS          = 40
 
@@ -223,10 +324,10 @@ export default {
     if (store.pendingPhotoData) {
       this.startRealMode(store.pendingPhotoData)
     } else {
-      // 2초 대기 후 데모 모드로 fallback
+      // 5초 대기 후 데모 모드로 fallback (Android 데이터 수신 여유 확보)
       this._bridgeTimeout = setTimeout(() => {
         if (!this.isRealMode) this.startDemoMode()
-      }, 2000)
+      }, 5000)
     }
   },
 
@@ -387,7 +488,7 @@ export default {
       // 3. 베스트컷 선정 (API 응답 대기 중 프로그레스 애니메이션)
       g.stage = 'selecting'
       g.selectPct = 0
-      const selectAnim = this.animatePct(g, 'selectPct', 2500)
+      const selectAnim = this.animatePct(g, 'selectPct', 4200)
 
       let bestCutIndex = 0
       try {
@@ -519,11 +620,11 @@ export default {
 
     isBest(g, pi) {
       if (g.bestCutIndex < 0) return false
-      return g.bestCutIndex === pi && ['selecting', 'generating', 'done'].includes(g.stage)
+      return g.bestCutIndex === pi && ['generating', 'done'].includes(g.stage)
     },
     isDim(g, pi) {
       if (g.bestCutIndex < 0) return false
-      return g.bestCutIndex !== pi && ['selecting', 'generating', 'done'].includes(g.stage)
+      return g.bestCutIndex !== pi && ['generating', 'done'].includes(g.stage)
     },
     isPending(g, pi) {
       return g.stage === 'uploading' && pi >= g.uploadedCount
@@ -532,6 +633,15 @@ export default {
       const idx = g.bestCutIndex >= 0 ? g.bestCutIndex : 0
       const src = g.photos[idx]?.src
       return src ? { backgroundImage: 'url(' + src + ')' } : {}
+    },
+
+    isPipeDone(g, step) {
+      const doneWhen = {
+        upload:   ['selecting', 'generating', 'done'],
+        select:   ['generating', 'done'],
+        generate: ['done'],
+      }
+      return (doneWhen[step] || []).includes(g.stage)
     },
 
     stageText(stage) {
@@ -632,48 +742,94 @@ export default {
   padding: 4px 10px; border-radius: var(--radius-pill);
   white-space: nowrap;
 }
-.pd-pill--waiting    { background: #f5f5f5; color: var(--text-sub); }
-.pd-pill--uploading  { background: rgba(20,110,245,0.1); color: var(--accent); }
-.pd-pill--selecting  { background: rgba(139,92,246,0.1); color: #8B5CF6; }
-.pd-pill--generating { background: rgba(139,92,246,0.15); color: #7c3aed; }
-.pd-pill--done       { background: rgba(0,180,100,0.1); color: #00a86b; }
+.pd-pill--waiting { background: #f5f5f5; color: var(--text-sub); }
+.pd-pill--done    { background: rgba(0,180,100,0.1); color: #00a86b; }
+
+/* ─── 3단계 파이프라인 ─── */
+.pd-pipeline {
+  display: flex; align-items: center;
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+.pd-pipe-step {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  flex-shrink: 0;
+}
+.pd-pipe-line {
+  flex: 1; height: 2px;
+  background: var(--border);
+  margin: 0 4px;
+  transition: background 0.5s ease;
+}
+.pd-pipe-line.filled {
+  background: linear-gradient(90deg, #146ef5, #8B5CF6);
+}
+.pd-pipe-dot {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  transition: all 0.35s ease;
+  position: relative;
+}
+.pd-pipe-step.is-done .pd-pipe-dot {
+  background: linear-gradient(135deg, #146ef5, #8B5CF6);
+  border-color: transparent;
+  color: #fff;
+}
+.pd-pipe-step.is-active .pd-pipe-dot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(20,110,245,0.12);
+}
+.pd-pipe-num {
+  font-size: 10px; color: var(--text-sub); font-weight: 600; line-height: 1;
+}
+.pd-pipe-label {
+  font-size: 10px; font-weight: 500; color: var(--text-sub);
+  white-space: nowrap; letter-spacing: -0.1px;
+}
+.pd-pipe-step.is-done .pd-pipe-label  { color: var(--accent); font-weight: 600; }
+.pd-pipe-step.is-active .pd-pipe-label { color: var(--accent); font-weight: 700; }
+
+/* 활성 단계 펄스 점 */
+.pd-pipe-pulse {
+  display: block; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  animation: pipePulse 1s ease-in-out infinite;
+}
+@keyframes pipePulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.55; }
+}
 
 /* ─── 사진 스트립 ─── */
 .pd-strip {
   display: flex; gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .pd-thumb-wrap {
   flex: 1; position: relative;
   border-radius: var(--radius);
   overflow: hidden;
-  transition: opacity 0.4s, transform 0.4s;
+  transition: opacity 0.4s, flex 0.4s;
 }
 .pd-thumb {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 100%; aspect-ratio: 1;
   background-size: cover; background-position: center;
   background-color: var(--border);
 }
-
-/* 베스트컷 */
 .pd-thumb-wrap.is-best {
-  flex: 1.5;
+  flex: 1.6;
   box-shadow: 0 0 0 2.5px #146ef5;
-  border-radius: var(--radius);
   z-index: 1;
 }
-/* 나머지 사진 dim */
-.pd-thumb-wrap.is-dim { opacity: 0.45; }
-
-/* 업로드 대기 오버레이 */
+.pd-thumb-wrap.is-dim { opacity: 0.4; }
 .pd-pending-overlay {
   position: absolute; inset: 0;
   background: rgba(0,0,0,0.45);
   display: flex; align-items: center; justify-content: center;
 }
-
-/* BEST 배지 */
 .pd-best-badge {
   position: absolute; bottom: 5px; left: 50%;
   transform: translateX(-50%);
@@ -683,10 +839,96 @@ export default {
   letter-spacing: 0.5px; white-space: nowrap;
 }
 
+/* ─── AI 에이전트 섹션 ─── */
+.pd-agent {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 0 10px; gap: 5px;
+  min-height: 120px; justify-content: center;
+}
+.pd-agent-icons {
+  display: flex; align-items: center; gap: 18px;
+  margin-bottom: 10px;
+}
+.pd-agent-msg {
+  font-size: 17px; font-weight: 800; color: var(--text);
+  letter-spacing: -0.5px; text-align: center; line-height: 1.3;
+}
+.pd-agent-sub {
+  font-size: 12px; color: var(--text-sub);
+  letter-spacing: -0.1px; text-align: center;
+}
+.pd-cursor {
+  display: inline-block;
+  animation: cursorBlink 0.8s step-end infinite;
+  margin-left: 1px; color: var(--accent);
+}
+@keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* 중앙 아이콘 래퍼 */
+.ag-center-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+
+/* 아이콘 기본 */
+.ag-icon { flex-shrink: 0; }
+
+/* 업로드 — 사진 아이콘 위아래 float */
+.ag-icon--cloud { color: #146ef5; }
+@keyframes floatUp {
+  0%, 100% { transform: translateY(0);     opacity: 0.5; }
+  50%       { transform: translateY(-10px); opacity: 1;   }
+}
+.ag-float-1 { color: var(--text-sub); animation: floatUp 1.7s ease-in-out infinite; }
+.ag-float-2 { color: var(--text-sub); animation: floatUp 1.7s ease-in-out 0.55s infinite; }
+
+/* 선별 — 눈 펄스 + 스캔 링 */
+.ag-icon--eye { color: #8B5CF6; animation: eyePulse 2s ease-in-out infinite; }
+@keyframes eyePulse {
+  0%, 100% { transform: scale(1); }
+  45%       { transform: scale(1.14); }
+  65%       { transform: scale(1.08); }
+}
+.ag-eye-ring {
+  position: absolute;
+  width: 60px; height: 60px; border-radius: 50%;
+  border: 2px solid rgba(139,92,246,0.35);
+  pointer-events: none;
+  animation: eyeRing 2s ease-out infinite;
+}
+@keyframes eyeRing {
+  0%   { transform: scale(0.75); opacity: 0; }
+  40%  { opacity: 1; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+.ag-star { color: #f59e0b; }
+@keyframes starBlink {
+  0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
+  50%       { opacity: 1;   transform: scale(1.25) rotate(22deg); }
+}
+.ag-star-1 { animation: starBlink 1.5s ease-in-out infinite; }
+.ag-star-2 { animation: starBlink 1.5s ease-in-out 0.75s infinite; }
+
+/* 기록 — 펜 흔들림 + 스파클 */
+.ag-icon--pen {
+  color: #146ef5;
+  animation: penWobble 1.3s ease-in-out infinite;
+  transform-origin: 80% 80%;
+}
+@keyframes penWobble {
+  0%, 100% { transform: rotate(-8deg); }
+  25%       { transform: rotate(2deg) translateY(-3px); }
+  75%       { transform: rotate(-4deg) translateY(-1px); }
+}
+.ag-spark { color: #8B5CF6; }
+@keyframes sparklePop {
+  0%, 100% { transform: scale(0.55) rotate(0deg);  opacity: 0.3; }
+  50%       { transform: scale(1.3)  rotate(30deg); opacity: 1;   }
+}
+.ag-spark-1 { animation: sparklePop 1.9s ease-in-out infinite; }
+.ag-spark-2 { animation: sparklePop 1.9s ease-in-out 0.65s infinite; }
+
 /* ─── 그룹 진행바 ─── */
 .pd-group-bar-row {
   display: flex; align-items: center; gap: 10px;
-  margin-bottom: 4px;
+  margin-top: 2px;
 }
 .pd-group-bar {
   flex: 1; height: 4px; border-radius: 2px;
@@ -699,15 +941,14 @@ export default {
   transition: width 0.35s ease;
 }
 .pd-group-label {
-  font-size: 11px; color: var(--text-sub);
-  letter-spacing: -0.1px; white-space: nowrap;
-  min-width: 100px; text-align: right;
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  letter-spacing: -0.1px; white-space: nowrap; min-width: 30px; text-align: right;
 }
 
 /* ─── 결과 미니 카드 ─── */
 .pd-result {
   display: flex; gap: 10px;
-  margin-top: 12px; padding: 12px;
+  margin-top: 14px; padding: 12px;
   background: #fafafa;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -719,10 +960,7 @@ export default {
   background-color: var(--border);
 }
 .pd-result-body { flex: 1; min-width: 0; }
-.pd-result-meta {
-  font-size: 11px; color: var(--text-sub);
-  letter-spacing: -0.1px; margin-bottom: 4px;
-}
+.pd-result-meta { font-size: 11px; color: var(--text-sub); letter-spacing: -0.1px; margin-bottom: 4px; }
 .pd-result-text {
   font-size: 12px; color: var(--text);
   line-height: 1.6; letter-spacing: -0.15px;
@@ -730,16 +968,10 @@ export default {
   -webkit-box-orient: vertical; overflow: hidden;
 }
 .pd-result-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.pd-tag {
-  font-size: 11px; font-weight: 500;
-  color: var(--accent); letter-spacing: -0.1px;
-}
+.pd-tag { font-size: 11px; font-weight: 500; color: var(--accent); letter-spacing: -0.1px; }
 
 /* ─── 완료 버튼 ─── */
-.pd-done-wrap {
-  padding: 24px 16px 0;
-  display: flex; justify-content: center;
-}
+.pd-done-wrap { padding: 24px 16px 0; display: flex; justify-content: center; }
 .pd-btn-home {
   width: 100%; max-width: 320px;
   background: linear-gradient(90deg, #146ef5, #8B5CF6);
@@ -754,6 +986,10 @@ export default {
 .pd-btn-home:active { opacity: 0.9; }
 
 /* ─── 트랜지션 ─── */
+.agent-fade-enter-active,
+.agent-fade-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.agent-fade-enter, .agent-fade-leave-to { opacity: 0; transform: translateY(8px); }
+
 .badge-pop-enter-active { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s; }
 .badge-pop-enter        { transform: translateX(-50%) scale(0.4); opacity: 0; }
 
@@ -762,7 +998,4 @@ export default {
 
 .fade-up-enter-active { transition: all 0.5s ease; }
 .fade-up-enter        { transform: translateY(16px); opacity: 0; }
-
-.fade-enter-active { transition: opacity 0.3s; }
-.fade-enter        { opacity: 0; }
 </style>
