@@ -104,9 +104,15 @@ export async function analyzePhoto(uploadFileId, location, weather) {
   return {
     aiRecord: response.dailyLog || '',
     categoryTags: Array.isArray(response.category) ? response.category : [],
-    emotionTags: response.emotion
-      ? String(response.emotion).split(',').map(s => s.trim()).filter(Boolean).map(label => ({ icon: '', label }))
-      : [],
+    emotionTags: (() => {
+      if (!response.emotion) return []
+      const raw = String(response.emotion)
+      // 콤마 구분자 우선, 없으면 공백 구분자로 fallback
+      const parts = raw.includes(',')
+        ? raw.split(',')
+        : raw.split(/\s+/)
+      return parts.map(s => s.trim()).filter(Boolean).map(label => ({ icon: '', label }))
+    })(),
   }
 }
 
