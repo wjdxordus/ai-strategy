@@ -939,13 +939,15 @@ export default {
       if (!this.$refs.naverMapDiv || !window.naver) return
       if (this.naverMap) return  // 이미 초기화됨
 
-      const center = this.mapRecords.length
-        ? new window.naver.maps.LatLng(this.mapRecords[0].lat, this.mapRecords[0].lng)
+      // 첫 번째 카드(momentTrackRecords[0]) 위치를 초기 중심으로
+      const firstCard = this.momentTrackRecords.find(r => r.lat && r.lng)
+      const center = firstCard
+        ? new window.naver.maps.LatLng(firstCard.lat, firstCard.lng)
         : new window.naver.maps.LatLng(37.5665, 126.9780)
 
       this.naverMap = new window.naver.maps.Map(this.$refs.naverMapDiv, {
         center,
-        zoom: 13,
+        zoom: 17,
         zoomControl: true,
         zoomControlOptions: { position: window.naver.maps.Position.RIGHT_CENTER },
         scaleControl: false,
@@ -954,8 +956,8 @@ export default {
 
       this.createMarkers()
 
-      if (this.mapRecords.length) {
-        this.activeMarkerId = this.mapRecords[0].id
+      if (firstCard) {
+        this.activeMarkerId = firstCard.id
         this.updateActiveMarker()
       }
     },
