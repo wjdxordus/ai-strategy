@@ -127,12 +127,16 @@ export default {
     pages() {
       const result = [{ type: 'cover' }]
       const recs = this.photoRecords
-      let i = 0
+      // 표지가 앞 4장을 사용하므로 콘텐츠 페이지는 index 4부터 시작
+      let i = 4
+      let isFirst = true
       while (i < recs.length) {
         const rem = recs.length - i
-        // 3~4장씩 분배: 나머지가 4 이하면 그대로, rem%3===1이면 4장 묶어 외줄 1장 방지
-        const size = rem <= 4 ? rem : (rem % 3 === 1 ? 4 : 3)
-        result.push({ type: 'content', records: recs.slice(i, i + size) })
+        // 첫 번째 content 페이지는 3장 고정 (1+2 레이아웃)
+        // 이후 3~4장씩 분배: 나머지가 4 이하면 그대로, rem%3===1이면 4장 묶어 외줄 1장 방지
+        const size = isFirst ? 3 : (rem <= 4 ? rem : (rem % 3 === 1 ? 4 : 3))
+        result.push({ type: 'content', records: recs.slice(i, i + size), isFirst })
+        isFirst = false
         i += size
       }
       result.push({ type: 'end' })
@@ -199,7 +203,7 @@ export default {
       fc.clear()
       const page = this.pages[idx]
       if      (page.type === 'cover')   await this.drawCover()
-      else if (page.type === 'content') await this.drawContent(page.records)
+      else if (page.type === 'content') await this.drawContent(page.records, page.isFirst)
       else                              await this.drawEnd()
       fc.renderAll()
     },
@@ -238,53 +242,18 @@ export default {
 
       for (let i = 0; i < Math.min(sample.length, 4); i++) {
         const { x, y } = gridPositions[i]
-        try {
-          const img = await loadImage(sample[i].thumbnail)
-          const scale = Math.max(cellW / img.width, cellH / img.height)
-          const scaledW = img.width * scale
-          const scaledH = img.height * scale
-
-          // 절대좌표로 위치 설정 → Group이 내부 상대좌표로 재계산
-          img.set({
-            left: x + (cellW - scaledW) / 2,
-            top:  y + (cellH - scaledH) / 2,
-            scaleX: scale,
-            scaleY: scale,
-          })
-
-          const border = new window.fabric.Rect({
-            left: x, top: y, width: cellW, height: cellH,
-            fill: 'transparent',
-            stroke: 'rgba(255,255,255,0.40)',
-            strokeWidth: 1.5,
-            rx: 6, ry: 6,
-          })
-
-          // clipPath는 Group 중심 기준 상대좌표
-          const clip = new window.fabric.Rect({
-            width: cellW, height: cellH,
-            originX: 'center', originY: 'center',
-            rx: 6, ry: 6,
-          })
-
-          const group = new window.fabric.Group([img, border], {
-            clipPath: clip,
-            selectable: true,
-            hoverCursor: 'move',
-          })
-          fc.add(group)
-        } catch (e) { /* 사진 없으면 스킵 */ }
+        await this.drawGridPhoto(fc, sample[i], x, y, cellW, cellH)
       }
     },
 
     /* ── Content page ───────────────────────── */
-    async drawContent(records) {
+    async drawContent(records, isFirst) {
       const { fc, cw, ch } = this
 
-      // 표지와 동일한 대각선 그라데이션 배경
+      // 배경 그라데이션
       fc.add(mkRect({ left: 0, top: 0, width: cw, height: ch, fill: diagGradient(cw, ch, GRAD_BLUE, GRAD_PURPLE) }))
 
-      // 표지와 동일한 장식 원
+      // 장식 원
       ;[
         { r: 90,  l: -35, t: -35, o: 0.09 },
         { r: 52,  l: cw - 42, t: 14, o: 0.10 },
@@ -295,7 +264,7 @@ export default {
         fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o * 1.8})`, stroke: '' }))
       )
 
-      // 월 표시 (흰색)
+      // 월 표시
       const d = new Date(records[0].date)
       const monthStr = `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}`
       fc.add(mkText(monthStr, {
@@ -304,55 +273,105 @@ export default {
         originX: 'center', originY: 'center',
       }))
 
-      // 시드 기반 결정론적 랜덤 (같은 페이지 = 같은 레이아웃)
-      const seed = records.reduce((s, r) => s + (r.date ? parseInt(r.date.replace(/-/g, '')) : 0), 0)
-      const rng = (i) => {
-        const x = Math.sin((seed + i) * 9301 + 49297) * 233280
-        return Math.abs(x - Math.floor(x))
-      }
+      if (isFirst) {
+        // ── 첫 번째 페이지: 1행 1장(전체 너비) + 2행 2장 ──
+        const pad = 20
+        const gap = 10
+        const gridTop = 40
+        const fullW = cw - pad * 2
+        const row1H = Math.floor((ch - gridTop - pad - gap) * 0.55)
+        const row2H = ch - gridTop - pad - gap - row1H
+        const cell2W = Math.floor((fullW - gap) / 2)
 
-      const n = Math.min(records.length, 4)
-      let layouts
+        // 1행: 1장 전체 너비
+        if (records[0]) await this.drawGridPhoto(fc, records[0], pad, gridTop, fullW, row1H)
 
-      if (n >= 4) {
-        // 4장: 상단 2장 + 하단 2장, 서로 살짝 겹침
-        const pw = Math.round(cw * 0.54)
-        const ph = Math.round(ch * 0.33)
-        const baseRots = [-8, 5, -5, 7]
-        layouts = [
-          { x: cw * 0.02, y: ch * 0.11, maxW: pw, maxH: ph, rot: baseRots[0] + rng(0) * 4 - 2 },
-          { x: cw * 0.40, y: ch * 0.13, maxW: pw, maxH: ph, rot: baseRots[1] + rng(1) * 4 - 2 },
-          { x: cw * 0.04, y: ch * 0.52, maxW: pw, maxH: ph, rot: baseRots[2] + rng(2) * 4 - 2 },
-          { x: cw * 0.38, y: ch * 0.55, maxW: pw, maxH: ph, rot: baseRots[3] + rng(3) * 4 - 2 },
-        ]
-      } else if (n === 3) {
-        // 3장: 좌상단 → 우중단 → 하단 캐스케이드 겹침
-        const baseRots = [-8, 5, -3]
-        layouts = [
-          { x: cw * 0.02, y: ch * 0.11, maxW: cw * 0.63, maxH: ch * 0.40, rot: baseRots[0] + rng(0) * 4 - 2 },
-          { x: cw * 0.30, y: ch * 0.25, maxW: cw * 0.60, maxH: ch * 0.37, rot: baseRots[1] + rng(1) * 4 - 2 },
-          { x: cw * 0.07, y: ch * 0.52, maxW: cw * 0.73, maxH: ch * 0.38, rot: baseRots[2] + rng(2) * 4 - 2 },
-        ]
-      } else if (n === 2) {
-        layouts = [
-          { x: cw * 0.02, y: ch * 0.11, maxW: cw - 32, maxH: ch * 0.40, rot: -2 + rng(0) * 2 - 1 },
-          { x: cw * 0.12, y: ch * 0.54, maxW: cw * 0.68, maxH: ch * 0.36, rot:  2 + rng(1) * 2 - 1 },
-        ]
+        // 2행: 2장 나란히
+        const row2Y = gridTop + row1H + gap
+        if (records[1]) await this.drawGridPhoto(fc, records[1], pad, row2Y, cell2W, row2H)
+        if (records[2]) await this.drawGridPhoto(fc, records[2], pad + cell2W + gap, row2Y, cell2W, row2H)
+
       } else {
-        layouts = [{ x: 16, y: 50, maxW: cw - 32, maxH: ch * 0.72, rot: -1 + rng(0) * 2 - 1 }]
-      }
+        // ── 이후 페이지: 폴라로이드 겹침 레이아웃 ──
+        const seed = records.reduce((s, r) => s + (r.date ? parseInt(r.date.replace(/-/g, '')) : 0), 0)
+        const rng = (i) => {
+          const x = Math.sin((seed + i) * 9301 + 49297) * 233280
+          return Math.abs(x - Math.floor(x))
+        }
 
-      // 드로우 순서를 섞어 랜덤 스택(겹침) 효과
-      const drawOrder = Array.from({ length: n }, (_, i) => i)
-      for (let s = n - 1; s > 0; s--) {
-        const j = Math.floor(rng(s + 20) * (s + 1))
-        ;[drawOrder[s], drawOrder[j]] = [drawOrder[j], drawOrder[s]]
-      }
+        const n = Math.min(records.length, 4)
+        let layouts
 
-      for (const i of drawOrder) {
-        const { x, y, maxW, maxH, rot } = layouts[i]
-        await this.drawPolaroid(fc, records[i], x, y, maxW, maxH, rot, false)
+        if (n >= 4) {
+          const pw = Math.round(cw * 0.54)
+          const ph = Math.round(ch * 0.33)
+          const baseRots = [-8, 5, -5, 7]
+          layouts = [
+            { x: cw * 0.02, y: ch * 0.11, maxW: pw, maxH: ph, rot: baseRots[0] + rng(0) * 4 - 2 },
+            { x: cw * 0.40, y: ch * 0.13, maxW: pw, maxH: ph, rot: baseRots[1] + rng(1) * 4 - 2 },
+            { x: cw * 0.04, y: ch * 0.52, maxW: pw, maxH: ph, rot: baseRots[2] + rng(2) * 4 - 2 },
+            { x: cw * 0.38, y: ch * 0.55, maxW: pw, maxH: ph, rot: baseRots[3] + rng(3) * 4 - 2 },
+          ]
+        } else if (n === 3) {
+          const baseRots = [-8, 5, -3]
+          layouts = [
+            { x: cw * 0.02, y: ch * 0.11, maxW: cw * 0.63, maxH: ch * 0.40, rot: baseRots[0] + rng(0) * 4 - 2 },
+            { x: cw * 0.30, y: ch * 0.25, maxW: cw * 0.60, maxH: ch * 0.37, rot: baseRots[1] + rng(1) * 4 - 2 },
+            { x: cw * 0.07, y: ch * 0.52, maxW: cw * 0.73, maxH: ch * 0.38, rot: baseRots[2] + rng(2) * 4 - 2 },
+          ]
+        } else if (n === 2) {
+          layouts = [
+            { x: cw * 0.02, y: ch * 0.11, maxW: cw - 32, maxH: ch * 0.40, rot: -2 + rng(0) * 2 - 1 },
+            { x: cw * 0.12, y: ch * 0.54, maxW: cw * 0.68, maxH: ch * 0.36, rot:  2 + rng(1) * 2 - 1 },
+          ]
+        } else {
+          layouts = [{ x: 16, y: 50, maxW: cw - 32, maxH: ch * 0.72, rot: -1 + rng(0) * 2 - 1 }]
+        }
+
+        const drawOrder = Array.from({ length: n }, (_, i) => i)
+        for (let s = n - 1; s > 0; s--) {
+          const j = Math.floor(rng(s + 20) * (s + 1))
+          ;[drawOrder[s], drawOrder[j]] = [drawOrder[j], drawOrder[s]]
+        }
+        for (const i of drawOrder) {
+          const { x, y, maxW, maxH, rot } = layouts[i]
+          await this.drawPolaroid(fc, records[i], x, y, maxW, maxH, rot, false)
+        }
       }
+    },
+
+    /* ── Grid photo helper (cover & first page 공용) ── */
+    async drawGridPhoto(fc, record, x, y, w, h) {
+      try {
+        const img = await loadImage(record.thumbnail)
+        const scale = Math.max(w / img.width, h / img.height)
+        const scaledW = img.width * scale
+        const scaledH = img.height * scale
+        img.set({
+          left: x + (w - scaledW) / 2,
+          top:  y + (h - scaledH) / 2,
+          scaleX: scale,
+          scaleY: scale,
+        })
+        const border = new window.fabric.Rect({
+          left: x, top: y, width: w, height: h,
+          fill: 'transparent',
+          stroke: 'rgba(255,255,255,0.40)',
+          strokeWidth: 1.5,
+          rx: 6, ry: 6,
+        })
+        const clip = new window.fabric.Rect({
+          width: w, height: h,
+          originX: 'center', originY: 'center',
+          rx: 6, ry: 6,
+        })
+        const group = new window.fabric.Group([img, border], {
+          clipPath: clip,
+          selectable: true,
+          hoverCursor: 'move',
+        })
+        fc.add(group)
+      } catch (e) { /* 스킵 */ }
     },
 
     /* ── Polaroid helper ────────────────────── */
