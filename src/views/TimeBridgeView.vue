@@ -132,6 +132,80 @@
             </template>
           </div>
         </div>
+
+        <!-- 감정 흐름 그래프 -->
+        <div
+          v-if="emotionChartMap[mg.key] && emotionChartMap[mg.key].pts.length >= 2 && mg.key < todayStr.slice(0, 7)"
+          class="emotion-chart-wrap"
+        >
+          <p class="emotion-chart-label">감정 흐름</p>
+          <svg class="emotion-chart-svg" viewBox="0 0 320 115" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient :id="`ec-lg-${mg.key}`" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#146ef5"/>
+                <stop offset="100%" stop-color="#8B5CF6"/>
+              </linearGradient>
+              <linearGradient :id="`ec-fg-${mg.key}`" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%" stop-color="#146ef5" stop-opacity="0.18"/>
+                <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Y축 레이블 -->
+            <text x="2" y="20" font-size="8.5" fill="#c8c8d8" font-family="system-ui,sans-serif" dominant-baseline="middle">좋음</text>
+            <text x="2" y="85" font-size="8.5" fill="#c8c8d8" font-family="system-ui,sans-serif" dominant-baseline="middle">나쁨</text>
+
+            <!-- Y축 기준선 (상단·하단 경계) -->
+            <line x1="28" y1="16" x2="308" y2="16" stroke="#ebebf0" stroke-width="0.8"/>
+            <line x1="28" :y1="emotionChartMap[mg.key].chartBottom" x2="308" :y2="emotionChartMap[mg.key].chartBottom" stroke="#ebebf0" stroke-width="0.8"/>
+
+            <!-- 중립선 (점선) -->
+            <line
+              x1="28" :y1="emotionChartMap[mg.key].neutralY"
+              x2="308" :y2="emotionChartMap[mg.key].neutralY"
+              stroke="#dcdce8" stroke-width="1" stroke-dasharray="4 3"
+            />
+            <text x="310" :y="emotionChartMap[mg.key].neutralY" font-size="7.5" fill="#c8c8d8" font-family="system-ui,sans-serif" dominant-baseline="middle">중립</text>
+
+            <!-- 채우기 영역 -->
+            <path :d="emotionChartMap[mg.key].fillPath" :fill="`url(#ec-fg-${mg.key})`"/>
+
+            <!-- 감정 라인 -->
+            <path
+              :d="emotionChartMap[mg.key].linePath"
+              fill="none"
+              :stroke="`url(#ec-lg-${mg.key})`"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+            <!-- 날짜별 점 (탭 가능) -->
+            <g
+              v-for="pt in emotionChartMap[mg.key].pts"
+              :key="pt.dateStr"
+              @click.stop="selectDate(pt.dateStr)"
+              style="cursor:pointer"
+            >
+              <circle :cx="pt.x" :cy="pt.y" r="11" fill="transparent"/>
+              <circle
+                :cx="pt.x" :cy="pt.y" r="3.5"
+                :fill="`url(#ec-lg-${mg.key})`"
+                stroke="white" stroke-width="1.8"
+              />
+            </g>
+
+            <!-- X축 고정 레이블: 1, 10, 20, 말일 -->
+            <text
+              v-for="lbl in emotionChartMap[mg.key].xLabels"
+              :key="lbl.day"
+              :x="lbl.x" y="103"
+              text-anchor="middle" font-size="9"
+              fill="#c0c0cc" font-family="system-ui,sans-serif"
+            >{{ lbl.day }}</text>
+          </svg>
+        </div>
+
       </div>
       <div style="height: 80px" />
     </div>
@@ -405,6 +479,46 @@ import { store } from '../store'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
+// 감정 태그 → 점수 (0~100) 매핑
+// 실제 store 데이터의 태그 레이블 기준 (명사형 + 형용사형 모두 포함)
+const EMOTION_SCORE = {
+  // ── 매우 긍정 (85~100) ──
+  '성취': 95, '완주': 93, '행복': 91, '축하': 90, '설렘': 89,
+  '신남': 88, '즐거움': 87, '사랑스러움': 86, '귀여움': 85,
+  // 형용사형
+  '행복한': 91, '즐거운': 87, '설레는': 89, '뿌듯한': 88,
+  '사랑스러운': 86, '신나는': 88, '기쁜': 90, '감사한': 83,
+
+  // ── 긍정 (65~84) ──
+  '활력': 82, '도전': 80, '열정': 79, '봄나들이': 78, '함께': 76,
+  '자유': 76, '상쾌함': 75, '반가움': 74, '신기함': 72, '호기심': 71,
+  '여유': 70, '따뜻함': 70, '장난': 68, '고요함': 67, '감성': 65,
+  '봄': 68, '봄하늘': 68, '벚꽃': 70, '맑음': 67,
+  '아이와함께': 78, '엄마와아이': 75, '아빠와아이': 75, '조부모': 68,
+  // 형용사형
+  '활기찬': 82, '편안한': 72, '포근한': 70, '따뜻한': 70,
+  '여유로운': 68, '상쾌한': 75, '평온한': 65,
+
+  // ── 중립/활동 (45~64) ──
+  '사색': 60, '집중': 58, '협업': 55, '독서': 55, '자연': 58,
+  '모임': 60, '카페': 58, '야경': 60, '산책': 62, '아침': 52,
+  '저녁': 52, '주말': 65, '외출': 55, '귀가': 58, '쇼핑': 55,
+  '놀이': 65, '놀이터': 65, '농촌': 55, '전통': 52, '단체': 52,
+  '바다': 68, '북한산': 60, '달리기': 62, '회식': 60, '식사': 55,
+  // 형용사형
+  '차분한': 55, '담담한': 50,
+
+  // ── 약간 부정 (25~44) ──
+  '바쁨': 38, '출퇴근': 38, '업무': 40, '등원': 42,
+  '졸림': 32, '이른아침': 42,
+  // 형용사형
+  '피곤한': 34, '그리운': 38, '걱정되는': 35, '쓸쓸한': 32,
+  '지친': 30, '외로운': 28, '수줍은': 42,
+
+  // ── 부정 (0~24) ──
+  '슬픈': 22, '힘든': 20, '우울한': 18, '속상한': 15,
+}
+
 export default {
   name: 'TimeBridgeView',
   data() {
@@ -623,6 +737,76 @@ export default {
       const map = {}
       for (const j of this.journeys) {
         for (const d of j.dates) map[d] = j
+      }
+      return map
+    },
+
+    // ── 감정 그래프 데이터 (월별 사전 계산) ─────────────────────────
+    emotionChartMap() {
+      const W = 320, H = 115
+      const PL = 28, PR = 12, PT = 16, PB = 30  // PB: X축 레이블 공간
+      const uw = W - PL - PR   // 280
+      const uh = H - PT - PB  // 69  (chart area height)
+      const chartBottom = H - PB  // 85
+      const neutralY = PT + uh * 0.5  // 중립선 Y (score=50)
+
+      const map = {}
+      for (const mg of this.calendarMonths) {
+        const [year, month] = mg.key.split('-').map(Number)
+        const daysInMonth = new Date(year, month, 0).getDate()
+        const pts = []
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${mg.key}-${String(d).padStart(2, '0')}`
+          const records = this.recordsByDate[dateStr]
+          if (!records || !records.length) continue
+          let total = 0, count = 0
+          for (const r of records) {
+            for (const tag of (r.emotionTags || [])) {
+              const label = (tag.label || '').trim()
+              if (label in EMOTION_SCORE) {
+                total += EMOTION_SCORE[label]
+                count++
+              }
+              // 매핑 없는 태그는 점수 계산에서 제외
+            }
+          }
+          if (!count) continue  // 매핑된 감정 태그가 없는 날은 그래프에서 제외
+          const score = total / count
+          const y = PT + (1 - score / 100) * uh
+          // x는 나중에 인덱스 기반 등간격으로 재계산
+          pts.push({ day: d, score: Math.round(score), x: 0, y, dateStr })
+        }
+
+        // 점 X 위치: 인덱스 기반 등간격 (날짜 간격 무관)
+        pts.forEach((pt, i) => {
+          pt.x = pts.length === 1
+            ? PL + uw / 2
+            : PL + (i / (pts.length - 1)) * uw
+        })
+
+        let linePath = '', fillPath = ''
+        if (pts.length >= 2) {
+          linePath = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`
+          for (let i = 1; i < pts.length; i++) {
+            const p0 = pts[i - 1], p1 = pts[i]
+            const dx = (p1.x - p0.x) * 0.45
+            linePath += ` C ${(p0.x + dx).toFixed(1)} ${p0.y.toFixed(1)},${(p1.x - dx).toFixed(1)} ${p1.y.toFixed(1)},${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`
+          }
+          fillPath = linePath
+            + ` L ${pts[pts.length - 1].x.toFixed(1)} ${H - PB}`
+            + ` L ${pts[0].x.toFixed(1)} ${H - PB} Z`
+        }
+
+        // X축 고정 레이블: 1일, 10일, 20일, 말일
+        const xLabels = [1, 10, 20, daysInMonth]
+          .filter((d, i, arr) => arr.indexOf(d) === i)  // 중복 제거 (말일=20이면 한 번만)
+          .map(d => ({
+            day: d,
+            x: PL + ((d - 1) / Math.max(daysInMonth - 1, 1)) * uw,
+          }))
+
+        map[mg.key] = { pts, linePath, fillPath, neutralY, chartBottom, xLabels }
       }
       return map
     },
@@ -1152,6 +1336,24 @@ export default {
 .cal-journey-icon {
   position: absolute; bottom: 3px; right: 3px;
   font-size: 9px; line-height: 1; z-index: 2;
+}
+
+/* ─── 감정 흐름 그래프 ──────────────────────── */
+.emotion-chart-wrap {
+  margin: 10px 16px 0;
+  background: #f7f7fc;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  padding-top: 12px;
+}
+.emotion-chart-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; color: var(--text-sub);
+  padding: 0 16px 4px;
+}
+.emotion-chart-svg {
+  display: block; width: 100%; height: auto;
 }
 
 /* ─── 일별 상세 뷰 ───────────────────────────── */
