@@ -44,8 +44,8 @@
 import { store } from '../store'
 
 const FABRIC_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js'
-const GRAD_BLUE   = '#146ef5'
-const GRAD_PURPLE = '#8B5CF6'
+const GRAD_BLUE   = '#F2A8C0'  // 연한 벚꽃 핑크
+const GRAD_PURPLE = '#FAD4A8'  // 연한 봄 살구
 
 function loadFabricJS() {
   return new Promise((resolve, reject) => {
@@ -208,82 +208,73 @@ export default {
     async drawCover() {
       const { fc, cw, ch } = this
 
-      // Diagonal gradient bg
+      // 배경 그라데이션
       fc.add(mkRect({ left: 0, top: 0, width: cw, height: ch, fill: diagGradient(cw, ch, GRAD_BLUE, GRAD_PURPLE) }))
 
-      // Decorative circles
-      ;[
-        { r: 100, l: -40, t: -40, o: 0.10 },
-        { r: 60,  l: cw - 50, t: 20, o: 0.12 },
-        { r: 140, l: cw - 80, t: ch - 110, o: 0.08 },
-        { r: 70,  l: 10, t: ch - 90, o: 0.10 },
-        { r: 40,  l: cw * 0.4, t: ch * 0.12, o: 0.07 },
-      ].forEach(({ r, l, t, o }) =>
-        fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o})`, stroke: '' }))
-      )
-
-      // Thin white horizontal lines
-      ;[0.15, 0.17].forEach(yr =>
-        fc.add(mkLine([cw * 0.18, ch * yr, cw * 0.82, ch * yr], { stroke: 'rgba(255,255,255,0.18)', strokeWidth: 1 }))
-      )
-
-      // Title
-      fc.add(mkText('Golden', {
-        left: cw / 2, top: ch * 0.28,
-        fontSize: 46, fontWeight: '800', fill: '#ffffff',
-        originX: 'center', originY: 'center',
-      }))
-      fc.add(mkText('Record', {
-        left: cw / 2, top: ch * 0.28 + 56,
-        fontSize: 46, fontWeight: '800', fill: '#ffffff',
-        originX: 'center', originY: 'center',
+      // 타이틀: "2026's Album" 한 줄
+      const outerPad = 20
+      const titleY = 48
+      fc.add(mkText("2026's Album", {
+        left: outerPad, top: titleY,
+        fontSize: 26, fontWeight: '800', fill: 'rgba(110,35,55,0.88)',
+        originX: 'left', originY: 'center',
       }))
 
-      // Divider
-      fc.add(mkLine([cw * 0.28, ch * 0.28 + 84, cw * 0.72, ch * 0.28 + 84], {
-        stroke: 'rgba(255,255,255,0.45)', strokeWidth: 1,
-      }))
+      // 2×2 사진 그리드
+      const gap = 10          // 사진 사이 간격
+      const colOffset = 20    // 2열을 1열보다 아래로 내리는 오프셋
+      const gridTop = titleY + 28
+      const cellW = Math.floor((cw - outerPad * 2 - gap) / 2)
+      const cellH = Math.floor((ch - gridTop - outerPad - gap - colOffset) / 2)
 
-      // Sub
-      fc.add(mkText('나의 소중한 일상 기록', {
-        left: cw / 2, top: ch * 0.28 + 102,
-        fontSize: 14, fontWeight: '400', fill: 'rgba(255,255,255,0.72)',
-        originX: 'center', originY: 'center',
-      }))
-      fc.add(mkText('2026', {
-        left: cw / 2, top: ch * 0.28 + 126,
-        fontSize: 18, fontWeight: '600', fill: 'rgba(255,255,255,0.88)',
-        originX: 'center', originY: 'center',
-      }))
-
-      // Polaroid photos (first 3 records)
-      const sample = this.photoRecords.slice(0, 3)
-      const photoY = ch * 0.58
-      const photoSz = Math.round(cw * 0.25)
-      const positions = [
-        { x: cw * 0.10, rot: -8 },
-        { x: cw * 0.50 - photoSz / 2, rot: 3 },
-        { x: cw * 0.90 - photoSz, rot: -5 },
+      const sample = this.photoRecords.slice(0, 4)
+      const col2X = outerPad + cellW + gap
+      const gridPositions = [
+        { x: outerPad, y: gridTop },
+        { x: col2X,    y: gridTop + colOffset },
+        { x: outerPad, y: gridTop + cellH + gap },
+        { x: col2X,    y: gridTop + colOffset + cellH + gap },
       ]
-      for (let i = 0; i < Math.min(sample.length, 3); i++) {
-        const { x, rot } = positions[i]
-        await this.drawPolaroid(fc, sample[i], x, photoY, photoSz, photoSz, rot, false)
-      }
 
-      // Record count badge
-      const totalRecs = this.photoRecords.length
-      const badgeY = ch * 0.88
-      fc.add(mkRect({
-        left: cw / 2 - 60, top: badgeY - 14,
-        width: 120, height: 28,
-        fill: 'rgba(255,255,255,0.18)',
-        rx: 14, ry: 14,
-      }))
-      fc.add(mkText(`${totalRecs}개의 기록`, {
-        left: cw / 2, top: badgeY,
-        fontSize: 13, fontWeight: '500', fill: 'rgba(255,255,255,0.88)',
-        originX: 'center', originY: 'center',
-      }))
+      for (let i = 0; i < Math.min(sample.length, 4); i++) {
+        const { x, y } = gridPositions[i]
+        try {
+          const img = await loadImage(sample[i].thumbnail)
+          const scale = Math.max(cellW / img.width, cellH / img.height)
+          const scaledW = img.width * scale
+          const scaledH = img.height * scale
+
+          // 절대좌표로 위치 설정 → Group이 내부 상대좌표로 재계산
+          img.set({
+            left: x + (cellW - scaledW) / 2,
+            top:  y + (cellH - scaledH) / 2,
+            scaleX: scale,
+            scaleY: scale,
+          })
+
+          const border = new window.fabric.Rect({
+            left: x, top: y, width: cellW, height: cellH,
+            fill: 'transparent',
+            stroke: 'rgba(255,255,255,0.40)',
+            strokeWidth: 1.5,
+            rx: 6, ry: 6,
+          })
+
+          // clipPath는 Group 중심 기준 상대좌표
+          const clip = new window.fabric.Rect({
+            width: cellW, height: cellH,
+            originX: 'center', originY: 'center',
+            rx: 6, ry: 6,
+          })
+
+          const group = new window.fabric.Group([img, border], {
+            clipPath: clip,
+            selectable: true,
+            hoverCursor: 'move',
+          })
+          fc.add(group)
+        } catch (e) { /* 사진 없으면 스킵 */ }
+      }
     },
 
     /* ── Content page ───────────────────────── */
@@ -301,7 +292,7 @@ export default {
         { r: 58,  l: 8, t: ch - 76, o: 0.09 },
         { r: 36,  l: cw * 0.40, t: ch * 0.08, o: 0.06 },
       ].forEach(({ r, l, t, o }) =>
-        fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o})`, stroke: '' }))
+        fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o * 1.8})`, stroke: '' }))
       )
 
       // 월 표시 (흰색)
@@ -309,7 +300,7 @@ export default {
       const monthStr = `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}`
       fc.add(mkText(monthStr, {
         left: cw / 2, top: 22,
-        fontSize: 13, fontWeight: '600', fill: 'rgba(255,255,255,0.75)',
+        fontSize: 13, fontWeight: '600', fill: 'rgba(110,35,55,0.65)',
         originX: 'center', originY: 'center',
       }))
 
@@ -386,7 +377,7 @@ export default {
         left: 0, top: 0,
         width: frameW, height: frameH,
         fill: '#ffffff',
-        shadow: new window.fabric.Shadow({ color: 'rgba(100,60,200,0.18)', blur: 18, offsetX: 2, offsetY: 5 }),
+        shadow: new window.fabric.Shadow({ color: 'rgba(200,80,120,0.18)', blur: 18, offsetX: 2, offsetY: 5 }),
         rx: 3, ry: 3,
       })
       img.set({ left: pad, top: pad, scaleX: scale, scaleY: scale })
@@ -433,27 +424,27 @@ export default {
         { r: 70,  l: 10, t: ch - 90, o: 0.10 },
         { r: 40,  l: cw * 0.4, t: ch * 0.12, o: 0.07 },
       ].forEach(({ r, l, t, o }) =>
-        fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o})`, stroke: '' }))
+        fc.add(mkCircle({ radius: r, left: l, top: t, fill: `rgba(255,255,255,${o * 1.8})`, stroke: '' }))
       )
 
       fc.add(mkText('계속될', {
         left: cw / 2, top: ch * 0.35,
-        fontSize: 34, fontWeight: '800', fill: 'rgba(255,255,255,0.92)',
+        fontSize: 34, fontWeight: '800', fill: 'rgba(110,35,55,0.90)',
         originX: 'center', originY: 'center',
       }))
       fc.add(mkText('나의 이야기', {
         left: cw / 2, top: ch * 0.35 + 46,
-        fontSize: 34, fontWeight: '800', fill: 'rgba(255,255,255,0.75)',
+        fontSize: 34, fontWeight: '800', fill: 'rgba(110,35,55,0.70)',
         originX: 'center', originY: 'center',
       }))
 
       fc.add(mkLine([cw * 0.3, ch * 0.35 + 78, cw * 0.7, ch * 0.35 + 78], {
-        stroke: 'rgba(255,255,255,0.30)', strokeWidth: 1,
+        stroke: 'rgba(110,35,55,0.20)', strokeWidth: 1,
       }))
 
       fc.add(mkText('Golden Record', {
         left: cw / 2, top: ch * 0.35 + 100,
-        fontSize: 13, fontWeight: '500', fill: 'rgba(255,255,255,0.55)',
+        fontSize: 13, fontWeight: '500', fill: 'rgba(110,35,55,0.45)',
         originX: 'center', originY: 'center',
       }))
 
@@ -479,8 +470,8 @@ export default {
 .pbe-canvas-area canvas {
   border-radius: 12px;
   box-shadow:
-    0 4px 6px -1px rgba(20,110,245,0.08),
-    0 12px 32px rgba(139,92,246,0.14);
+    0 4px 6px -1px rgba(212,97,138,0.10),
+    0 12px 32px rgba(232,160,96,0.18);
   display: block;
 }
 
@@ -492,14 +483,14 @@ export default {
 }
 .pbe-spinner {
   width: 36px; height: 36px;
-  border: 3px solid rgba(139,92,246,0.2);
-  border-top-color: #146ef5;
+  border: 3px solid rgba(212,97,138,0.2);
+  border-top-color: #D4618A;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .pbe-loading-text {
-  font-size: 13px; color: rgba(139,92,246,0.7); font-weight: 500;
+  font-size: 13px; color: rgba(212,97,138,0.7); font-weight: 500;
 }
 
 /* ── Nav ── */
@@ -510,7 +501,7 @@ export default {
 }
 .pbe-nav-btn {
   width: 38px; height: 38px; border-radius: 50%;
-  border: 1.5px solid rgba(139,92,246,0.2);
+  border: 1.5px solid rgba(212,97,138,0.2);
   background: rgba(255,255,255,0.9);
   color: #555; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -518,7 +509,7 @@ export default {
   -webkit-tap-highlight-color: transparent;
 }
 .pbe-nav-btn:not(:disabled):active {
-  background: linear-gradient(90deg, #146ef5, #8B5CF6);
+  background: linear-gradient(90deg, #D4618A, #E8A060);
   color: #fff; border-color: transparent;
 }
 .pbe-nav-btn:disabled { opacity: 0.3; cursor: default; }
@@ -529,7 +520,7 @@ export default {
 }
 .pbe-page-label {
   font-size: 12px; font-weight: 600;
-  background: linear-gradient(90deg, #146ef5, #8B5CF6);
+  background: linear-gradient(90deg, #D4618A, #E8A060);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
@@ -545,6 +536,6 @@ export default {
 }
 .pbe-dot.active {
   width: 16px; border-radius: 3px;
-  background: linear-gradient(90deg, #146ef5, #8B5CF6);
+  background: linear-gradient(90deg, #D4618A, #E8A060);
 }
 </style>
