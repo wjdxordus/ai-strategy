@@ -263,7 +263,7 @@ export default {
 
         input.onchange = (e) => {
           const file = e.target.files[0]
-          document.body.removeChild(input)
+          if (document.body.contains(input)) document.body.removeChild(input)
           if (!file) return
           const reader = new FileReader()
           reader.onload = (ev) => this.handlePhotoPicked(JSON.stringify({

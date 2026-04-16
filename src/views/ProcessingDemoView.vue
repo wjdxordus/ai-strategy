@@ -331,8 +331,11 @@ export default {
   mounted() {
     if (store.pendingPhotoData) {
       this.startRealMode(store.pendingPhotoData)
+    } else if (window.Android) {
+      // Android 앱 내부: 역지오코딩 등 처리 시간이 5초를 초과할 수 있으므로
+      // 데모 타임아웃 없이 watcher가 pendingPhotoData를 감지할 때까지 대기
     } else {
-      // 5초 대기 후 데모 모드로 fallback (Android 데이터 수신 여유 확보)
+      // 브라우저 환경: 5초 후 데모 모드 fallback
       this._bridgeTimeout = setTimeout(() => {
         if (!this.isRealMode) this.startDemoMode()
       }, 5000)
@@ -412,6 +415,11 @@ export default {
     // ─── 실제 API 처리 모드 ───────────────────────────────────────────────────
 
     startRealMode(pendingData) {
+      // 데모 타이머가 혹시 실행 중이면 모두 취소
+      this._timers.forEach(clearTimeout)
+      this._timers = []
+      clearTimeout(this._bridgeTimeout)
+
       this.isRealMode = true
       store.pendingPhotoData = null  // 소비 후 클리어
 
