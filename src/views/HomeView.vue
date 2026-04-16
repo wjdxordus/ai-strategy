@@ -12,6 +12,7 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
               </svg>
+              <span class="notif-badge">1</span>
             </button>
             <button class="header-icon-btn" aria-label="검색" @click="$router.push({ path: '/my', query: { tab: 'tag_album' } })">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -195,8 +196,17 @@ export default {
   display: flex; align-items: center; justify-content: center;
   border: none; background: none; cursor: pointer;
   color: var(--text-mid); border-radius: var(--radius);
+  position: relative;
 }
 .header-icon-btn:active { background: var(--accent-light); color: var(--accent); }
+.notif-badge {
+  position: absolute; top: 3px; right: 3px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: linear-gradient(135deg, #146ef5 0%, #8B5CF6 100%);
+  color: #fff; font-size: 8px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; border: 1.5px solid #fff;
+}
 .section-title {
   font-size: 24px; font-weight: 600; color: var(--text);
   letter-spacing: -0.8px; line-height: 1.04;
