@@ -62,7 +62,8 @@ const LETTER = `함께한 모든 분들께,
 교육을 위해 힘써주신 1조에서 5조 모든 분들 
 정말 고생하셨습니다.
 
-— AI전략과정에 참여하고 지원해주신 모든분들께`
+— AI전략과정에 참여하고 지원해주신 모든분들께
+  (Claude sonnet 4.6 작성)`
 
 export default {
   name: 'LetterView',
